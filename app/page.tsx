@@ -1,101 +1,72 @@
-import Image from "next/image";
+import { createClient } from '@/lib/supabase/server'
+import { Hero } from '@/components/sections/Hero'
+import { CategoryGrid } from '@/components/sections/CategoryGrid'
+import { FeaturedProducts } from '@/components/sections/FeaturedProducts'
+import { ScarcityStrip } from '@/components/sections/ScarcityStrip'
+import { CommunityFeed } from '@/components/sections/CommunityFeed'
+import { NewsletterStrip } from '@/components/sections/NewsletterStrip'
+import { TrustBadges } from '@/components/sections/TrustBadges'
 
-export default function Home() {
+export const revalidate = 30
+
+export default async function HomePage() {
+  const supabase = createClient()
+
+  // Fetch all homepage data in parallel
+  const [
+    { data: settings },
+    { data: rawCategories },
+    { data: lookbook },
+  ] = await Promise.all([
+    supabase.from('homepage_settings').select('*').eq('id', 1).single(),
+    supabase.from('categories').select('*').eq('is_active', true).is('parent_id', null).order('display_order'),
+    supabase.from('lookbook_submissions').select('*').eq('status', 'Approved').order('created_at', { ascending: false }).limit(12),
+  ])
+
+  // Fetch featured products
+  const featuredIds = settings?.featured_product_ids ?? []
+  let featuredProducts: Array<{ id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null; images: Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }> }> = []
+
+  if (featuredIds.length > 0) {
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, slug, price, original_price, badge, product_images(id, image_url, is_primary, display_order)')
+      .eq('status', 'Published')
+      .in('id', featuredIds)
+      .limit(8)
+    featuredProducts = (data ?? []).map((p: Record<string, unknown>) => ({
+      ...(p as { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null }),
+      images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
+    }))
+  }
+
+  // Fallback: fetch 8 featured/published products if none pinned
+  if (featuredProducts.length === 0) {
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, slug, price, original_price, badge, is_featured, product_images(id, image_url, is_primary, display_order)')
+      .eq('status', 'Published')
+      .eq('is_featured', true)
+      .limit(8)
+    featuredProducts = (data ?? []).map((p: Record<string, unknown>) => ({
+      ...(p as { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null }),
+      images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
+    }))
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    <>
+      <Hero
+        headline={settings?.hero_headline ?? null}
+        subtext={settings?.hero_subtext ?? null}
+        imageUrl={settings?.hero_image_url ?? null}
+      />
+      <TrustBadges />
+      <CategoryGrid categories={rawCategories ?? []} />
+      <ScarcityStrip />
+      <FeaturedProducts products={featuredProducts as Parameters<typeof FeaturedProducts>[0]['products']} />
+      <CommunityFeed submissions={lookbook ?? []} />
+      <NewsletterStrip />
+    </>
+  )
 }
