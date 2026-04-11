@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { SkeletonGrid } from '@/components/ui/SkeletonCard'
+import { SortSelect } from '@/components/ui/SortSelect'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 
@@ -9,11 +10,6 @@ export const revalidate = 60
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const BADGES = ['New Arrival', 'Sale', 'Bestseller', 'Low Stock']
-const SORT_OPTIONS = [
-  { label: 'Newest', value: 'newest' },
-  { label: 'Price: Low to High', value: 'price_asc' },
-  { label: 'Price: High to Low', value: 'price_desc' },
-]
 
 interface Props {
   searchParams: Record<string, string | string[] | undefined>
@@ -151,13 +147,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           <div className="flex justify-end mb-6">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">Sort:</span>
-              <select
-                value={sort}
-                onChange={(e) => { window.location.href = buildHref({ sort: e.target.value }) }}
-                className="text-sm border border-gray-200 px-3 py-1.5 rounded outline-none"
-              >
-                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <SortSelect value={sort} buildHref={(s) => buildHref({ sort: s })} />
             </div>
           </div>
 
