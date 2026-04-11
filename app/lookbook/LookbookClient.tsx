@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Camera, Instagram, X } from 'lucide-react'
+import { Camera, X } from 'lucide-react'
+
+const InstagramIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+  </svg>
+)
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -92,7 +98,7 @@ export function LookbookClient({ submissions }: Props) {
                   <p className="text-sm font-medium">{sub.submitter_name}</p>
                   {sub.instagram_handle && (
                     <p className="text-xs text-white/70 flex items-center gap-1 mt-0.5">
-                      <Instagram size={10} />@{sub.instagram_handle}
+                      <InstagramIcon />@{sub.instagram_handle}
                     </p>
                   )}
                 </div>

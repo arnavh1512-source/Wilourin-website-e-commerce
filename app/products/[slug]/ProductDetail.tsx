@@ -1,12 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Heart, ShoppingBag, Star, ChevronDown, Share2 } from 'lucide-react'
+import { Heart, ShoppingBag, Star, ChevronDown, Share2, Users } from 'lucide-react'
 import { useCartStore, useWishlistStore, useUIStore, useToastStore } from '@/lib/store'
 import { formatPrice, isLowStock, isOutOfStock, cn } from '@/lib/utils'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { createClient } from '@/lib/supabase/client'
 import type { ProductVariant, Review } from '@/lib/types'
+
+function useViewerCount(productId: string) {
+  const [count, setCount] = useState(1)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase.channel(`pdp:${productId}`, {
+      config: { presence: { key: Math.random().toString(36).slice(2) } },
+    })
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState()
+        setCount(Object.keys(state).length)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ productId, ts: Date.now() })
+        }
+      })
+
+    return () => { supabase.removeChannel(channel) }
+  }, [productId])
+
+  return count
+}
 
 interface Props {
   product: {
@@ -38,6 +65,7 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
   const setCartOpen = useUIStore((s) => s.setCartOpen)
   const addToast = useToastStore((s) => s.addToast)
   const wishlisted = isWishlisted(product.id)
+  const viewerCount = useViewerCount(product.id)
 
   // Group variants by color, then by size
   const colors = Array.from(new Map(
@@ -169,6 +197,14 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Live viewer count */}
+          {viewerCount > 1 && (
+            <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-3 py-1.5 w-fit">
+              <Users size={12} />
+              <span>{viewerCount} people are viewing this right now</span>
             </div>
           )}
 

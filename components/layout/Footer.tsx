@@ -1,5 +1,16 @@
 import Link from 'next/link'
-import { Instagram, Twitter, Pinterest, MessageCircle } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
+
+const InstagramIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+  </svg>
+)
+const XIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+)
 
 const SHOP_LINKS = [
   { label: 'Men', href: '/products?category=men' },
@@ -30,11 +41,11 @@ export function Footer() {
             Premium Indian streetwear crafted for the bold and fearless. Dress the streets.
           </p>
           <div className="flex gap-4 pt-2">
-            <a href="https://instagram.com/wilourin" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
-              <Instagram size={18} />
+            <a href="https://www.instagram.com/wilourin" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+              <InstagramIcon />
             </a>
-            <a href="https://twitter.com/wilourin" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
-              <Twitter size={18} />
+            <a href="https://twitter.com/wilourin" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="X (Twitter)">
+              <XIcon />
             </a>
             <a href="https://wa.me/918140081461" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="WhatsApp">
               <MessageCircle size={18} />
