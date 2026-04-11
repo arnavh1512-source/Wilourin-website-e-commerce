@@ -10,26 +10,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient()
 
-    // Initial session load — getSession() reads from cookie, no Web Lock acquired
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) return
+    // onAuthStateChange fires INITIAL_SESSION on mount with the current session —
+    // no getUser() or getSession() call needed, so no Web Lock is ever acquired here.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setProfile(null)
+        setIsAdmin(false)
+        return
+      }
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
       if (profile) setProfile(profile)
       const { data: admin } = await supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).single()
       setIsAdmin(!!admin)
-    })
-
-    // Auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setProfile(null)
-        setIsAdmin(false)
-      } else if (session?.user) {
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-        if (profile) setProfile(profile)
-        const { data: admin } = await supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).single()
-        setIsAdmin(!!admin)
-      }
     })
 
     return () => subscription.unsubscribe()

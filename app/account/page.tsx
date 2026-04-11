@@ -101,10 +101,10 @@ export default function AccountPage() {
         {/* Content */}
         <div className="flex-1 min-w-0">
           {tab === 'profile' && <ProfileTab user={user} profile={profile} setProfile={setProfile} addToast={addToast} />}
-          {tab === 'orders' && <OrdersTab />}
-          {tab === 'wishlist' && <WishlistTab />}
-          {tab === 'addresses' && <AddressesTab addToast={addToast} />}
-          {tab === 'loyalty' && <LoyaltyTab profile={profile} addToast={addToast} />}
+          {tab === 'orders' && <OrdersTab userId={user.id} />}
+          {tab === 'wishlist' && <WishlistTab userId={user.id} />}
+          {tab === 'addresses' && <AddressesTab userId={user.id} addToast={addToast} />}
+          {tab === 'loyalty' && <LoyaltyTab userId={user.id} profile={profile} addToast={addToast} />}
         </div>
       </div>
     </div>
@@ -210,22 +210,19 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
 
 // ── Orders Tab ───────────────────────────────────────────────────────────────
 
-function OrdersTab() {
+function OrdersTab({ userId }: { userId: string }) {
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      supabase.from('orders')
-        .select('*, order_items(*)')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .then(({ data }) => { setOrders((data as OrderWithItems[]) ?? []); setLoading(false) })
-    })
-  }, [])
+    supabase.from('orders')
+      .select('*, order_items(*)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setOrders((data as OrderWithItems[]) ?? []); setLoading(false) })
+  }, [userId])
 
   const statusColor: Record<string, string> = {
     Confirmed: 'bg-blue-50 text-blue-700',
@@ -305,21 +302,18 @@ function OrdersTab() {
 
 // ── Wishlist Tab ─────────────────────────────────────────────────────────────
 
-function WishlistTab() {
+function WishlistTab({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      supabase.from('wishlist')
-        .select('*, products(id, name, slug, original_price, price, product_images(image_url, is_primary))')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .then(({ data }) => { setItems(data ?? []); setLoading(false) })
-    })
-  }, [])
+    supabase.from('wishlist')
+      .select('*, products(id, name, slug, original_price, price, product_images(image_url, is_primary))')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setItems(data ?? []); setLoading(false) })
+  }, [userId])
 
   const remove = async (id: string) => {
     const supabase = createClient()
@@ -367,24 +361,19 @@ function WishlistTab() {
 
 // ── Addresses Tab ────────────────────────────────────────────────────────────
 
-function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
+function AddressesTab({ userId, addToast }: { userId: string; addToast: (m: string, t: any) => void }) {
   const [addresses, setAddresses] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Address | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<AddressForm>({ resolver: zodResolver(addressSchema) })
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      setUserId(session.user.id)
-      supabase.from('addresses').select('*').eq('user_id', session.user.id).order('is_default', { ascending: false })
-        .then(({ data }) => { setAddresses((data as Address[]) ?? []); setLoading(false) })
-    })
-  }, [])
+    supabase.from('addresses').select('*').eq('user_id', userId).order('is_default', { ascending: false })
+      .then(({ data }) => { setAddresses((data as Address[]) ?? []); setLoading(false) })
+  }, [userId])
 
   const openAdd = () => { setEditing(null); reset({}); setShowForm(true) }
   const openEdit = (a: Address) => {
@@ -394,7 +383,6 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
   }
 
   const onSave = async (data: AddressForm) => {
-    if (!userId) return
     const supabase = createClient()
     if (editing) {
       const { data: updated, error } = await supabase.from('addresses').update(data).eq('id', editing.id).select().single()
@@ -418,7 +406,6 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
   }
 
   const setDefault = async (id: string) => {
-    if (!userId) return
     const supabase = createClient()
     await supabase.from('addresses').update({ is_default: false }).eq('user_id', userId)
     await supabase.from('addresses').update({ is_default: true }).eq('id', id)
@@ -522,7 +509,7 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
 
 // ── Loyalty Tab ──────────────────────────────────────────────────────────────
 
-function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: (m: string, t: any) => void }) {
+function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Profile | null; addToast: (m: string, t: any) => void }) {
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -540,13 +527,10 @@ function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: 
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      supabase.from('loyalty_transactions').select('*').eq('user_id', session.user.id)
-        .order('created_at', { ascending: false }).limit(20)
-        .then(({ data }) => { setTransactions(data ?? []); setLoading(false) })
-    })
-  }, [])
+    supabase.from('loyalty_transactions').select('*').eq('user_id', userId)
+      .order('created_at', { ascending: false }).limit(20)
+      .then(({ data }) => { setTransactions(data ?? []); setLoading(false) })
+  }, [userId])
 
   const copyCode = () => {
     if (!profile?.referral_code) return
