@@ -1,17 +1,24 @@
 'use client'
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUserStore } from '@/lib/store'
 
+// Pages where we must NOT run any Supabase auth calls.
+// onAuthStateChange acquires the Web Lock immediately on registration,
+// which blocks signInWithPassword / signUp from ever completing.
+const AUTH_PAGES = ['/login', '/signup']
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const { setProfile, setIsAdmin } = useUserStore()
+  const pathname = usePathname()
 
   useEffect(() => {
+    if (AUTH_PAGES.includes(pathname)) return
+
     const supabase = createClient()
 
-    // onAuthStateChange fires INITIAL_SESSION on mount with the current session —
-    // no getUser() or getSession() call needed, so no Web Lock is ever acquired here.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         setProfile(null)
@@ -25,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [setProfile, setIsAdmin])
+  }, [pathname, setProfile, setIsAdmin])
 
   return <>{children}</>
 }
