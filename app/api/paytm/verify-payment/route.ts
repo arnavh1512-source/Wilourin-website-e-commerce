@@ -115,21 +115,17 @@ export async function POST(req: NextRequest) {
         total_price: item.price * item.quantity,
       })
 
-      await admin.rpc('decrement_stock', { variant_id: item.id, qty: item.quantity })
-        .catch(() => {
-          // Fallback if RPC not created
-          admin.from('product_variants')
-            .select('stock_qty')
+      const { error: rpcErr } = await admin.rpc('decrement_stock', { variant_id: item.id, qty: item.quantity })
+      if (rpcErr) {
+        // Fallback: read current stock then write GREATEST(0, stock - qty)
+        const { data: variant } = await admin.from('product_variants').select('stock_qty').eq('id', item.id).single()
+        if (variant) {
+          await admin.from('product_variants')
+            .update({ stock_qty: Math.max(0, variant.stock_qty - item.quantity) })
             .eq('id', item.id)
-            .single()
-            .then(({ data }) => {
-              if (data) {
-                admin.from('product_variants')
-                  .update({ stock_qty: Math.max(0, data.stock_qty - item.quantity) })
-                  .eq('id', item.id)
-              }
-            })
-        })
+        }
+        console.error('[verify-payment] decrement_stock RPC failed, used fallback:', rpcErr.message)
+      }
     }
 
     // ── Award loyalty points ──────────────────────────────

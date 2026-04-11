@@ -360,7 +360,7 @@ export default function AdminProductsPage() {
                     <td className="px-4 py-3 text-gray-500">{p.categories?.name ?? '—'}</td>
                     <td className="px-4 py-3">
                       <p className="font-medium">₹{p.price}</p>
-                      {p.sale_price && <p className="text-xs text-green-600">Sale: ₹{p.sale_price}</p>}
+                      {p.original_price && <p className="text-xs text-gray-400 line-through">₹{p.original_price}</p>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
