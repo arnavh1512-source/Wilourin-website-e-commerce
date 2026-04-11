@@ -19,7 +19,7 @@ export default function AdminDiscountsPage() {
 
   const [form, setForm] = useState({
     code: '', type: 'percentage', value: '', min_order_amount: '',
-    usage_limit: '', expires_at: '', is_active: true,
+    usage_limit: '', expiry_date: '', is_active: true,
   })
 
   const load = async () => {
@@ -33,7 +33,7 @@ export default function AdminDiscountsPage() {
 
   const openAdd = () => {
     setEditing(null)
-    setForm({ code: '', type: 'percentage', value: '', min_order_amount: '', usage_limit: '', expires_at: '', is_active: true })
+    setForm({ code: '', type: 'percentage', value: '', min_order_amount: '', usage_limit: '', expiry_date: '', is_active: true })
     setShowForm(true)
   }
 
@@ -42,7 +42,7 @@ export default function AdminDiscountsPage() {
     setForm({
       code: c.code, type: c.type, value: String(c.value ?? ''),
       min_order_amount: String(c.min_order_amount ?? ''), usage_limit: String(c.usage_limit ?? ''),
-      expires_at: c.expires_at ? c.expires_at.split('T')[0] : '', is_active: c.is_active,
+      expiry_date: c.expiry_date ? c.expiry_date.split('T')[0] : '', is_active: c.is_active,
     })
     setShowForm(true)
   }
@@ -57,7 +57,7 @@ export default function AdminDiscountsPage() {
       value: Number(form.value),
       min_order_amount: form.min_order_amount ? Number(form.min_order_amount) : null,
       usage_limit: form.usage_limit ? Number(form.usage_limit) : null,
-      expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
+      expiry_date: form.expiry_date ? new Date(form.expiry_date).toISOString() : null,
       is_active: form.is_active,
     }
     if (editing) {
@@ -138,7 +138,7 @@ export default function AdminDiscountsPage() {
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">Expires At</label>
-              <input type="date" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
+              <input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })}
                 className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
             </div>
             <div className="flex items-center gap-2 pt-4">
@@ -186,7 +186,7 @@ export default function AdminDiscountsPage() {
                   <td className="px-4 py-3 capitalize text-gray-500">{c.type}</td>
                   <td className="px-4 py-3">{c.type === 'percentage' ? `${c.value}%` : c.type === 'flat' ? `₹${c.value}` : 'Free'}</td>
                   <td className="px-4 py-3 text-gray-500">{c.usage_count ?? 0}{c.usage_limit ? `/${c.usage_limit}` : ''}</td>
-                  <td className="px-4 py-3 text-gray-500">{c.expires_at ? formatDate(c.expires_at) : '—'}</td>
+                  <td className="px-4 py-3 text-gray-500">{c.expiry_date ? formatDate(c.expiry_date) : '—'}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => toggleActive(c.id, c.is_active)}
                       className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${c.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>

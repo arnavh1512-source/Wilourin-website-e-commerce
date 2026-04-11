@@ -29,17 +29,10 @@ export function Navbar() {
   const [announcement, setAnnouncement] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const { getItemCount, toggleCart } = useCartStore((s) => ({
-    getItemCount: s.getItemCount,
-    toggleCart: () => useUIStore.getState().toggleCart(),
-  }))
-  const { isCartOpen, toggleCart: uiToggleCart, toggleSearch } = useUIStore()
+  const { toggleCart: uiToggleCart, toggleSearch } = useUIStore()
   const { profile, isAdmin } = useUserStore()
   const wishlistCount = useWishlistStore((s) => s.items.length)
   const cartCount = useCartStore((s) => s.getItemCount())
-
-  const isAdmin_ = isAdmin
-  const isHero = pathname === '/' && !scrolled
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
@@ -134,7 +127,7 @@ export function Navbar() {
                   </span>
                 )}
               </Link>
-              {isAdmin_ && (
+              {isAdmin && (
                 <Link href="/admin" className="hidden lg:block text-xs uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">
                   Admin
                 </Link>
@@ -162,7 +155,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {isAdmin_ && (
+            {isAdmin && (
               <Link href="/admin" onClick={() => setMenuOpen(false)} className="py-4 text-2xl font-serif border-b border-gray-100 text-gray-500">
                 Admin Panel
               </Link>

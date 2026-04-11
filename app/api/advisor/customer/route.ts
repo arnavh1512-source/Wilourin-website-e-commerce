@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const admin = createAdminClient()
     const [{ data: products }, { data: categories }] = await Promise.all([
       admin.from('products')
-        .select('name, slug, price, sale_price, badge, description, categories(name)')
+        .select('name, slug, price, original_price, badge, description, categories(name)')
         .eq('status', 'Published')
         .order('name'),
       admin.from('categories').select('name, slug').order('name'),
@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
 
     const productContext = (products ?? []).map((p: any) => ({
       name: p.name,
-      price: p.sale_price ?? p.price,
+      price: p.price,
+      original_price: p.original_price,
       badge: p.badge,
       category: p.categories?.name,
       description: p.description?.slice(0, 100),

@@ -38,17 +38,15 @@ export default function AdminSettingsPage() {
     const { error } = await supabase.from('store_settings').upsert({
       id: 1,
       store_name: settings.store_name,
-      store_email: settings.store_email,
-      store_phone: settings.store_phone,
-      store_address: settings.store_address,
+      contact_email: settings.contact_email,
+      contact_phone: settings.contact_phone,
+      address: settings.address,
       logo_url: settings.logo_url,
       currency: settings.currency,
       free_shipping_threshold: settings.free_shipping_threshold,
       standard_shipping_cost: settings.standard_shipping_cost,
       express_shipping_cost: settings.express_shipping_cost,
-      tax_rate: settings.tax_rate,
       instagram_url: settings.instagram_url,
-      whatsapp_number: settings.whatsapp_number,
     })
     setSaving(false)
     if (error) addToast(error.message, 'error')
@@ -75,9 +73,9 @@ export default function AdminSettingsPage() {
       <div className="bg-white border border-gray-100 p-6 space-y-4">
         <h2 className="font-medium text-sm uppercase tracking-widest text-gray-500">Store Info</h2>
         <Field label="Store Name" fieldKey="store_name" />
-        <Field label="Store Email" fieldKey="store_email" type="email" />
-        <Field label="Store Phone" fieldKey="store_phone" />
-        <Field label="Store Address" fieldKey="store_address" />
+        <Field label="Contact Email" fieldKey="contact_email" type="email" />
+        <Field label="Contact Phone" fieldKey="contact_phone" />
+        <Field label="Address" fieldKey="address" />
 
         <div>
           <label className="text-xs text-gray-500 block mb-2">Logo</label>
@@ -98,14 +96,12 @@ export default function AdminSettingsPage() {
           <Field label="Free Shipping Threshold (₹)" fieldKey="free_shipping_threshold" type="number" />
           <Field label="Standard Shipping (₹)" fieldKey="standard_shipping_cost" type="number" />
           <Field label="Express Shipping (₹)" fieldKey="express_shipping_cost" type="number" />
-          <Field label="Tax Rate (%)" fieldKey="tax_rate" type="number" />
         </div>
       </div>
 
       <div className="bg-white border border-gray-100 p-6 space-y-4">
         <h2 className="font-medium text-sm uppercase tracking-widest text-gray-500">Social & Contact</h2>
         <Field label="Instagram URL" fieldKey="instagram_url" placeholder="https://instagram.com/wilourin" />
-        <Field label="WhatsApp Number" fieldKey="whatsapp_number" placeholder="+918140081461" />
       </div>
 
       <button onClick={handleSave} disabled={saving}

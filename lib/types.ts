@@ -295,7 +295,7 @@ export interface ProductWithDetails extends Product {
 }
 
 export interface OrderWithItems extends Order {
-  items: OrderItem[]
+  order_items: OrderItem[]
   profile: Pick<Profile, 'full_name'> | null
   address: Address | null
 }

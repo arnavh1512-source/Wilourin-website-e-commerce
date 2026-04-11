@@ -32,13 +32,11 @@ export default function AdminHomepagePage() {
     const { error } = await supabase.from('homepage_settings').upsert({
       id: 1,
       announcement_text: settings.announcement_text,
-      hero_title: settings.hero_title,
-      hero_subtitle: settings.hero_subtitle,
+      hero_headline: settings.hero_headline,
+      hero_subtext: settings.hero_subtext,
       hero_image_url: settings.hero_image_url,
       featured_product_ids: settings.featured_product_ids,
       featured_category_ids: settings.featured_category_ids,
-      livestream_url: settings.livestream_url,
-      livestream_active: settings.livestream_active,
     })
     setSaving(false)
     if (error) addToast(error.message, 'error')
@@ -82,14 +80,14 @@ export default function AdminHomepagePage() {
 
       <div className="bg-white border border-gray-100 p-6 space-y-4">
         <h2 className="font-medium text-sm uppercase tracking-widest text-gray-500">Hero Section</h2>
-        <Field label="Hero Title">
-          <input value={settings.hero_title ?? ''}
-            onChange={(e) => setSettings((p: any) => ({ ...p, hero_title: e.target.value }))}
+        <Field label="Hero Headline">
+          <input value={settings.hero_headline ?? ''}
+            onChange={(e) => setSettings((p: any) => ({ ...p, hero_headline: e.target.value }))}
             className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
         </Field>
-        <Field label="Hero Subtitle">
-          <input value={settings.hero_subtitle ?? ''}
-            onChange={(e) => setSettings((p: any) => ({ ...p, hero_subtitle: e.target.value }))}
+        <Field label="Hero Subtext">
+          <input value={settings.hero_subtext ?? ''}
+            onChange={(e) => setSettings((p: any) => ({ ...p, hero_subtext: e.target.value }))}
             className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
         </Field>
         <Field label="Hero Image URL">
@@ -127,22 +125,6 @@ export default function AdminHomepagePage() {
             </label>
           ))}
         </div>
-      </div>
-
-      <div className="bg-white border border-gray-100 p-6 space-y-4">
-        <h2 className="font-medium text-sm uppercase tracking-widest text-gray-500">Livestream</h2>
-        <Field label="Livestream URL">
-          <input value={settings.livestream_url ?? ''}
-            onChange={(e) => setSettings((p: any) => ({ ...p, livestream_url: e.target.value }))}
-            placeholder="YouTube/Instagram embed URL"
-            className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400 font-mono text-xs" />
-        </Field>
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input type="checkbox"
-            checked={settings.livestream_active ?? false}
-            onChange={(e) => setSettings((p: any) => ({ ...p, livestream_active: e.target.checked })) } />
-          Show livestream section on homepage
-        </label>
       </div>
 
       <button onClick={handleSave} disabled={saving}
