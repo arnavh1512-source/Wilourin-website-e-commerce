@@ -30,13 +30,14 @@ export default function AdminDashboard() {
 
   const load = async () => {
     setLoading(true)
+    try {
     const admin = createAdminClientBrowser()
     const now = new Date()
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
 
     const [
-      { data: paidOrders },
+      { data: paidOrders, error: e1 },
       { data: thisMonthOrders },
       { data: lastMonthOrders },
       { data: allOrders },
@@ -52,6 +53,8 @@ export default function AdminDashboard() {
       admin.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
       admin.from('orders').select('*, order_items(product_name, quantity)').order('created_at', { ascending: false }).limit(5),
     ])
+
+    if (e1) console.error('[Admin Dashboard] DB error:', e1.message)
 
     const totalRevenue = (paidOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
     const thisMonthRevenue = (thisMonthOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
@@ -91,6 +94,10 @@ export default function AdminDashboard() {
       revenueByMonth,
     })
     setLoading(false)
+    } catch (err) {
+      console.error('[Admin Dashboard] load() threw:', err)
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [])
