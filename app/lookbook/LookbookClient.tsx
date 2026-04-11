@@ -36,20 +36,25 @@ export function LookbookClient({ submissions }: Props) {
 
   const onSubmit = async (data: FormData) => {
     setSubmitting(true)
-    const supabase = createClient()
-    const { error } = await supabase.from('lookbook_submissions').insert({
-      submitter_name: data.submitter_name,
-      instagram_handle: data.instagram_handle || null,
-      photo_url: data.photo_url,
-      status: 'Pending',
-    })
-    setSubmitting(false)
-    if (error) {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('lookbook_submissions').insert({
+        submitter_name: data.submitter_name,
+        instagram_handle: data.instagram_handle || null,
+        photo_url: data.photo_url,
+        status: 'Pending',
+      })
+      if (error) {
+        addToast('Failed to submit. Please try again.', 'error')
+      } else {
+        addToast('Look submitted! Pending admin approval.', 'success')
+        reset()
+        setShowForm(false)
+      }
+    } catch (err) {
       addToast('Failed to submit. Please try again.', 'error')
-    } else {
-      addToast('Look submitted! Pending admin approval.', 'success')
-      reset()
-      setShowForm(false)
+    } finally {
+      setSubmitting(false)
     }
   }
 

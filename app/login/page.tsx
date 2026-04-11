@@ -30,18 +30,23 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     setErrorMsg(null)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    })
-    if (error) {
-      setErrorMsg(error.message)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
+      if (error) {
+        setErrorMsg(error.message)
+        return
+      }
+      // Hard redirect so the browser picks up the new session cookie cleanly
+      window.location.href = redirect
+    } catch (err: any) {
+      setErrorMsg(err?.message ?? 'An unexpected error occurred')
+    } finally {
       setLoading(false)
-      return
     }
-    // Hard redirect so the browser picks up the new session cookie cleanly
-    window.location.href = redirect
   }
 
   const handleGoogle = async () => {

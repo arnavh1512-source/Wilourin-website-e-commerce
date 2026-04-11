@@ -30,18 +30,24 @@ export default function SignupPage() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { full_name: data.fullName },
-      },
-    })
-    if (error) { setLoading(false); addToast(error.message, 'error'); return }
-    addToast('Account created! Welcome to Wilourin.', 'success')
-    // Hard redirect so middleware picks up the new session cookie cleanly
-    window.location.href = '/account'
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: { full_name: data.fullName },
+        },
+      })
+      if (error) { addToast(error.message, 'error'); return }
+      addToast('Account created! Welcome to Wilourin.', 'success')
+      // Hard redirect so middleware picks up the new session cookie cleanly
+      window.location.href = '/account'
+    } catch (err: any) {
+      addToast(err?.message ?? 'An unexpected error occurred', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleGoogle = async () => {

@@ -131,31 +131,41 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
 
   const onSave = async (data: ProfileForm) => {
     setSaving(true)
-    const supabase = createClient()
-    const { data: updated, error } = await supabase
-      .from('profiles').update({ full_name: data.full_name, phone: data.phone || null } as any)
-      .eq('id', user.id).select().single()
-    setSaving(false)
-    if (error) { addToast(error.message, 'error'); return }
-    setProfile(updated as Profile)
-    addToast('Profile updated!', 'success')
+    try {
+      const supabase = createClient()
+      const { data: updated, error } = await supabase
+        .from('profiles').update({ full_name: data.full_name, phone: data.phone || null } as any)
+        .eq('id', user.id).select().single()
+      if (error) { addToast(error.message, 'error'); return }
+      setProfile(updated as Profile)
+      addToast('Profile updated!', 'success')
+    } catch (err: any) {
+      addToast(err?.message ?? 'Failed to update profile', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${user.id}.${ext}`
-    const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
-    if (upErr) { addToast('Upload failed', 'error'); setUploading(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
-    const { data: updated, error } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id).select().single()
-    setUploading(false)
-    if (error) { addToast(error.message, 'error'); return }
-    setProfile(updated as Profile)
-    addToast('Avatar updated!', 'success')
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const path = `avatars/${user.id}.${ext}`
+      const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
+      if (upErr) { addToast('Upload failed', 'error'); return }
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
+      const { data: updated, error } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id).select().single()
+      if (error) { addToast(error.message, 'error'); return }
+      setProfile(updated as Profile)
+      addToast('Avatar updated!', 'success')
+    } catch (err: any) {
+      addToast(err?.message ?? 'Upload failed', 'error')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
