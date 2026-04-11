@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   LayoutDashboard, Package, Tag, Image, Ruler,
   ShoppingBag, Users, Percent, Star, Home, BookOpen,
   Settings, Bot, LogOut, Menu, X
 } from 'lucide-react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV = [
@@ -27,34 +27,17 @@ const NAV = [
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const pathname = usePathname()
-  const [checking, setChecking] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.replace('/login?redirect=/admin'); return }
-      // Check admin
-      const { data } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).single()
-      if (!data) { router.replace('/'); return }
-      setChecking(false)
-    })
-  }, [router])
+  // Middleware (middleware.ts) already guards /admin/* routes.
+  // No client-side auth check needed here.
 
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    window.location.href = '/'
   }
-
-  if (checking) return (
-    <div className="h-screen flex items-center justify-center bg-[#0A0A0A]">
-      <div className="w-8 h-8 border-2 border-gray-700 border-t-white rounded-full animate-spin" />
-    </div>
-  )
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">

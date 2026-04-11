@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,7 +21,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function SignupPage() {
-  const router = useRouter()
   const addToast = useToastStore((s) => s.addToast)
   const [showPw, setShowPw] = useState(false)
   const [showCPw, setShowCPw] = useState(false)
@@ -40,11 +38,10 @@ export default function SignupPage() {
         data: { full_name: data.fullName },
       },
     })
-    setLoading(false)
-    if (error) { addToast(error.message, 'error'); return }
+    if (error) { setLoading(false); addToast(error.message, 'error'); return }
     addToast('Account created! Welcome to Wilourin.', 'success')
-    router.push('/account')
-    router.refresh()
+    // Hard redirect so middleware picks up the new session cookie cleanly
+    window.location.href = '/account'
   }
 
   const handleGoogle = async () => {

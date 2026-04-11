@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -38,7 +37,6 @@ const addressSchema = z.object({
 type AddressForm = z.infer<typeof addressSchema>
 
 export default function AccountPage() {
-  const router = useRouter()
   const { profile, setProfile } = useUserStore()
   const addToast = useToastStore((s) => s.addToast)
   const [tab, setTab] = useState<Tab>('profile')
@@ -47,18 +45,19 @@ export default function AccountPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { router.push('/login?redirect=/account'); return }
-      setUser(user)
+    // onAuthStateChange is passive — reads session from cookie without acquiring Web Lock
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) { window.location.href = '/login?redirect=/account'; return }
+      setUser(session.user)
       setLoading(false)
     })
-  }, [router])
+    return () => subscription.unsubscribe()
+  }, [])
 
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    window.location.href = '/'
   }
 
   if (loading) return (
@@ -218,11 +217,11 @@ function OrdersTab() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return
       supabase.from('orders')
         .select('*, order_items(*)')
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .then(({ data }) => { setOrders((data as OrderWithItems[]) ?? []); setLoading(false) })
     })
@@ -312,11 +311,11 @@ function WishlistTab() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return
       supabase.from('wishlist')
-        .select('*, products(id, name, slug, sale_price, price, product_images(image_url, is_primary))')
-        .eq('user_id', user.id)
+        .select('*, products(id, name, slug, original_price, price, product_images(image_url, is_primary))')
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .then(({ data }) => { setItems(data ?? []); setLoading(false) })
     })
@@ -344,11 +343,11 @@ function WishlistTab() {
         {items.map((item) => {
           const product = item.products
           const img = product?.product_images?.find((i: any) => i.is_primary)?.image_url
-          const price = product?.sale_price ?? product?.price
+          const price = product?.original_price ?? product?.price
           return (
             <div key={item.id} className="group relative">
               <Link href={`/products/${product?.slug}`}>
-                <div className="aspect-[3/4] bg-gray-100 overflow-hidden mb-2">
+                <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-2">
                   {img && <Image src={img} alt={product?.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />}
                 </div>
                 <p className="text-sm font-medium truncate">{product?.name}</p>
@@ -379,10 +378,10 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      setUserId(user.id)
-      supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false })
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return
+      setUserId(session.user.id)
+      supabase.from('addresses').select('*').eq('user_id', session.user.id).order('is_default', { ascending: false })
         .then(({ data }) => { setAddresses((data as Address[]) ?? []); setLoading(false) })
     })
   }, [])
@@ -541,9 +540,9 @@ function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: 
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase.from('loyalty_transactions').select('*').eq('user_id', user.id)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return
+      supabase.from('loyalty_transactions').select('*').eq('user_id', session.user.id)
         .order('created_at', { ascending: false }).limit(20)
         .then(({ data }) => { setTransactions(data ?? []); setLoading(false) })
     })

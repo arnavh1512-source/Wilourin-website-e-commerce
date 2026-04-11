@@ -15,7 +15,7 @@ export default function AdminLoyaltyPage() {
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
-      supabase.from('store_settings').select('loyalty_points_per_rupee, points_to_rupee_ratio').eq('id', 1).single(),
+      supabase.from('store_settings').select('loyalty_points_per_rupee').eq('id', 1).single(),
       supabase.from('loyalty_transactions').select('*, profiles(full_name)').order('created_at', { ascending: false }).limit(50),
     ]).then(([{ data: s }, { data: t }]) => {
       setSettings(s)
@@ -29,7 +29,6 @@ export default function AdminLoyaltyPage() {
     const supabase = createClient()
     await supabase.from('store_settings').update({
       loyalty_points_per_rupee: settings.loyalty_points_per_rupee,
-      points_to_rupee_ratio: settings.points_to_rupee_ratio,
     }).eq('id', 1)
     setSaving(false)
     addToast('Loyalty settings saved', 'success')
@@ -47,12 +46,6 @@ export default function AdminLoyaltyPage() {
           <label className="text-xs text-gray-500 block mb-1">Points earned per ₹1 spent</label>
           <input type="number" step="0.1" value={settings?.loyalty_points_per_rupee ?? 1}
             onChange={(e) => setSettings((prev: any) => ({ ...prev, loyalty_points_per_rupee: Number(e.target.value) }))}
-            className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 block mb-1">Points to ₹ ratio (e.g. 100 pts = ₹10 → enter 10)</label>
-          <input type="number" value={settings?.points_to_rupee_ratio ?? 10}
-            onChange={(e) => setSettings((prev: any) => ({ ...prev, points_to_rupee_ratio: Number(e.target.value) }))}
             className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
         </div>
         <div className="bg-gray-50 p-3 text-xs text-gray-500 space-y-1">
