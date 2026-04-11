@@ -31,15 +31,22 @@ export default function AdminProductsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    Promise.all([
-      supabase.from('products').select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty)').order('created_at', { ascending: false }),
-      supabase.from('categories').select('id, name').order('name'),
-    ]).then(([{ data: p }, { data: c }]) => {
-      setProducts(p ?? [])
-      setCategories(c ?? [])
-      setLoading(false)
-    })
+    const run = async () => {
+      try {
+        const supabase = createClient()
+        const [{ data: p }, { data: c }] = await Promise.all([
+          supabase.from('products').select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty)').order('created_at', { ascending: false }),
+          supabase.from('categories').select('id, name').order('name'),
+        ])
+        setProducts(p ?? [])
+        setCategories(c ?? [])
+      } catch (err) {
+        console.error('[Products] load threw:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
   }, [])
 
   const openAdd = () => {

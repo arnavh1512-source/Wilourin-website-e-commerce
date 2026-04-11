@@ -13,15 +13,22 @@ export default function AdminLoyaltyPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    Promise.all([
-      supabase.from('store_settings').select('loyalty_points_per_rupee').eq('id', 1).single(),
-      supabase.from('loyalty_transactions').select('*, profiles(full_name)').order('created_at', { ascending: false }).limit(50),
-    ]).then(([{ data: s }, { data: t }]) => {
-      setSettings(s)
-      setTransactions(t ?? [])
-      setLoading(false)
-    })
+    const run = async () => {
+      try {
+        const supabase = createClient()
+        const [{ data: s }, { data: t }] = await Promise.all([
+          supabase.from('store_settings').select('loyalty_points_per_rupee').eq('id', 1).single(),
+          supabase.from('loyalty_transactions').select('*, profiles(full_name)').order('created_at', { ascending: false }).limit(50),
+        ])
+        setSettings(s)
+        setTransactions(t ?? [])
+      } catch (err) {
+        console.error('[Loyalty] load threw:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
   }, [])
 
   const handleSave = async () => {

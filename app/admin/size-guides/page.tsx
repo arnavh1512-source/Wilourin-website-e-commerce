@@ -29,10 +29,16 @@ export default function AdminSizeGuidesPage() {
   ])
 
   const load = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('size_guides').select('*, categories(name)').order('name')
-    setGuides(data ?? [])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data } = await supabase.from('size_guides').select('*, categories(name)').order('name')
+      setGuides(data ?? [])
+    } catch (err) {
+      console.error('[SizeGuides] load threw:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [])

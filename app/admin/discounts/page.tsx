@@ -23,10 +23,17 @@ export default function AdminDiscountsPage() {
   })
 
   const load = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('discount_codes').select('*').order('created_at', { ascending: false })
-    setCodes(data ?? [])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('discount_codes').select('*').order('created_at', { ascending: false })
+      if (error) console.error('[Discounts] query error:', error)
+      setCodes(data ?? [])
+    } catch (err) {
+      console.error('[Discounts] load threw:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [])

@@ -19,10 +19,16 @@ export default function AdminCategoriesPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const load = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('categories').select('*, parent:parent_id(name)').order('name')
-    setCategories(data ?? [])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data } = await supabase.from('categories').select('*, parent:parent_id(name)').order('name')
+      setCategories(data ?? [])
+    } catch (err) {
+      console.error('[Categories] load threw:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [])

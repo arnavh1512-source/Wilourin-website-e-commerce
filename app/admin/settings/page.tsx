@@ -14,9 +14,18 @@ export default function AdminSettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('store_settings').select('*').eq('id', 1).single()
-      .then(({ data }) => { setSettings(data ?? {}); setLoading(false) })
+    const run = async () => {
+      try {
+        const supabase = createClient()
+        const { data } = await supabase.from('store_settings').select('*').eq('id', 1).single()
+        setSettings(data ?? {})
+      } catch (err) {
+        console.error('[Settings] load threw:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
   }, [])
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

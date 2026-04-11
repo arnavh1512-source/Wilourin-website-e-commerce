@@ -16,16 +16,21 @@ export default function AdminMediaPage() {
 
   const load = async () => {
     setLoading(true)
-    const supabase = createClient()
-    const { data } = await supabase.storage.from('product-images').list('', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
-    if (data) {
-      const enriched = data.filter((f) => f.name !== '.emptyFolderPlaceholder').map((f) => {
-        const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(f.name)
-        return { ...f, url: publicUrl }
-      })
-      setFiles(enriched)
+    try {
+      const supabase = createClient()
+      const { data } = await supabase.storage.from('product-images').list('', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
+      if (data) {
+        const enriched = data.filter((f) => f.name !== '.emptyFolderPlaceholder').map((f) => {
+          const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(f.name)
+          return { ...f, url: publicUrl }
+        })
+        setFiles(enriched)
+      }
+    } catch (err) {
+      console.error('[Media] load threw:', err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => { load() }, [])

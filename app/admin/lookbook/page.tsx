@@ -14,12 +14,18 @@ export default function AdminLookbookPage() {
   const [filter, setFilter] = useState('Pending')
 
   const load = async () => {
-    const supabase = createClient()
-    let q = supabase.from('lookbook_submissions').select('*').order('created_at', { ascending: false })
-    if (filter) q = q.eq('status', filter)
-    const { data } = await q
-    setSubmissions(data ?? [])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      let q = supabase.from('lookbook_submissions').select('*').order('created_at', { ascending: false })
+      if (filter) q = q.eq('status', filter)
+      const { data } = await q
+      setSubmissions(data ?? [])
+    } catch (err) {
+      console.error('[Lookbook] load threw:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [filter])

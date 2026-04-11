@@ -28,13 +28,19 @@ export default function AdminOrdersPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const fetchOrders = async () => {
-    const supabase = createClient()
-    let q = supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false })
-    if (statusFilter) q = q.eq('order_status', statusFilter)
-    if (search) q = q.or(`order_number.ilike.%${search}%,guest_email.ilike.%${search}%`)
-    const { data } = await q
-    setOrders(data ?? [])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      let q = supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false })
+      if (statusFilter) q = q.eq('order_status', statusFilter)
+      if (search) q = q.or(`order_number.ilike.%${search}%,guest_email.ilike.%${search}%`)
+      const { data } = await q
+      setOrders(data ?? [])
+    } catch (err) {
+      console.error('[Orders] fetchOrders threw:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchOrders() }, [search, statusFilter])

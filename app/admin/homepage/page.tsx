@@ -13,17 +13,24 @@ export default function AdminHomepagePage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    Promise.all([
-      supabase.from('homepage_settings').select('*').eq('id', 1).single(),
-      supabase.from('products').select('id, name').eq('status', 'Published').order('name'),
-      supabase.from('categories').select('id, name').order('name'),
-    ]).then(([{ data: s }, { data: p }, { data: c }]) => {
-      setSettings(s ?? {})
-      setProducts(p ?? [])
-      setCategories(c ?? [])
-      setLoading(false)
-    })
+    const run = async () => {
+      try {
+        const supabase = createClient()
+        const [{ data: s }, { data: p }, { data: c }] = await Promise.all([
+          supabase.from('homepage_settings').select('*').eq('id', 1).single(),
+          supabase.from('products').select('id, name').eq('status', 'Published').order('name'),
+          supabase.from('categories').select('id, name').order('name'),
+        ])
+        setSettings(s ?? {})
+        setProducts(p ?? [])
+        setCategories(c ?? [])
+      } catch (err) {
+        console.error('[Homepage] load threw:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
   }, [])
 
   const handleSave = async () => {

@@ -11,25 +11,24 @@ export default function AdminCustomersPage() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(async ({ data: profiles }) => {
-        if (!profiles) { setLoading(false); return }
-        // Fetch order counts + totals
+    const run = async () => {
+      try {
+        const supabase = createClient()
+        const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+        if (!profiles) return
         const enriched = await Promise.all(profiles.map(async (p) => {
-          const { data: orders } = await supabase
-            .from('orders')
-            .select('total')
-            .eq('user_id', p.id)
-            .eq('payment_status', 'Paid')
+          const { data: orders } = await supabase.from('orders').select('total').eq('user_id', p.id).eq('payment_status', 'Paid')
           const totalSpent = (orders ?? []).reduce((s, o) => s + Number(o.total), 0)
           return { ...p, orderCount: orders?.length ?? 0, totalSpent: Math.round(totalSpent) }
         }))
         setCustomers(enriched)
+      } catch (err) {
+        console.error('[Customers] load threw:', err)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    run()
   }, [])
 
   const filtered = customers.filter((c) =>
