@@ -147,7 +147,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           <div className="flex justify-end mb-6">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">Sort:</span>
-              <SortSelect value={sort} buildHref={(s) => buildHref({ sort: s })} />
+              <SortSelect value={sort} />
             </div>
           </div>
 
