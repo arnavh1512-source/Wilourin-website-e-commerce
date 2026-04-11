@@ -33,7 +33,7 @@ export default function AdminCustomersPage() {
   }, [])
 
   const filtered = customers.filter((c) =>
-    !search || c.full_name?.toLowerCase().includes(search.toLowerCase()) || c.email?.toLowerCase().includes(search.toLowerCase())
+    !search || c.full_name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search)
   )
 
   const tierColors: Record<string, string> = {
@@ -48,7 +48,7 @@ export default function AdminCustomersPage() {
 
       <div className="relative max-w-xs">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or email…"
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or phone…"
           className="w-full border border-gray-200 pl-9 pr-4 py-2 text-sm outline-none focus:border-gray-400" />
       </div>
 

@@ -5,7 +5,7 @@ import { Search, Printer, ChevronDown, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatPrice } from '@/lib/utils'
 
-const STATUSES = ['Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refund Requested', 'Refunded']
+const STATUSES = ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Refund Requested']
 
 const statusColors: Record<string, string> = {
   Confirmed: 'bg-blue-50 text-blue-700',
