@@ -8,7 +8,7 @@ import { useToastStore } from '@/lib/store'
 import { slugify } from '@/lib/utils'
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const BADGES = ['New', 'Bestseller', 'Sale', 'Limited', '']
+const BADGES = ['New Arrival', 'Bestseller', 'Sale', 'Low Stock', '']
 
 export default function AdminProductsPage() {
   const addToast = useToastStore((s) => s.addToast)
@@ -21,7 +21,7 @@ export default function AdminProductsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    name: '', slug: '', description: '', category_id: '', price: '', sale_price: '',
+    name: '', slug: '', description: '', category_id: '', price: '', original_price: '',
     badge: '', status: 'Draft', meta_title: '', meta_description: '',
   })
   const [variants, setVariants] = useState<any[]>([])
@@ -33,7 +33,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
-      supabase.from('products').select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty, price)').order('created_at', { ascending: false }),
+      supabase.from('products').select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty)').order('created_at', { ascending: false }),
       supabase.from('categories').select('id, name').order('name'),
     ]).then(([{ data: p }, { data: c }]) => {
       setProducts(p ?? [])
@@ -44,8 +44,8 @@ export default function AdminProductsPage() {
 
   const openAdd = () => {
     setEditing(null)
-    setForm({ name: '', slug: '', description: '', category_id: '', price: '', sale_price: '', badge: '', status: 'Draft', meta_title: '', meta_description: '' })
-    setVariants([{ size: 'M', color_name: 'Black', stock_qty: 0, price: '' }])
+    setForm({ name: '', slug: '', description: '', category_id: '', price: '', original_price: '', badge: '', status: 'Draft', meta_title: '', meta_description: '' })
+    setVariants([{ size: 'M', color_name: 'Black', stock_qty: 0 }])
     setImages([])
     setShowForm(true)
   }
@@ -54,10 +54,10 @@ export default function AdminProductsPage() {
     setEditing(p)
     setForm({
       name: p.name, slug: p.slug, description: p.description ?? '', category_id: p.category_id ?? '',
-      price: String(p.price), sale_price: String(p.sale_price ?? ''), badge: p.badge ?? '',
+      price: String(p.price), original_price: String(p.original_price ?? ''), badge: p.badge ?? '',
       status: p.status, meta_title: p.meta_title ?? '', meta_description: p.meta_description ?? '',
     })
-    setVariants(p.product_variants?.map((v: any) => ({ ...v, price: String(v.price) })) ?? [])
+    setVariants(p.product_variants?.map((v: any) => ({ ...v })) ?? [])
     setImages(p.product_images?.map((i: any) => ({ url: i.image_url, isPrimary: i.is_primary })) ?? [])
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -90,7 +90,7 @@ export default function AdminProductsPage() {
     setImages((prev) => prev.map((img, i) => ({ ...img, isPrimary: i === idx })))
   }
 
-  const addVariant = () => setVariants((prev) => [...prev, { size: 'M', color_name: 'Black', stock_qty: 0, price: '' }])
+  const addVariant = () => setVariants((prev) => [...prev, { size: 'M', color_name: 'Black', stock_qty: 0 }])
   const removeVariant = (idx: number) => setVariants((prev) => prev.filter((_, i) => i !== idx))
   const updateVariant = (idx: number, key: string, value: any) => setVariants((prev) => prev.map((v, i) => i === idx ? { ...v, [key]: value } : v))
 
@@ -105,7 +105,7 @@ export default function AdminProductsPage() {
       description: form.description || null,
       category_id: form.category_id || null,
       price: Number(form.price),
-      sale_price: form.sale_price ? Number(form.sale_price) : null,
+      original_price: form.original_price ? Number(form.original_price) : null,
       badge: form.badge || null,
       status: form.status,
       meta_title: form.meta_title || null,
@@ -138,7 +138,6 @@ export default function AdminProductsPage() {
           size: v.size,
           color_name: v.color_name,
           stock_qty: Number(v.stock_qty),
-          price: v.price ? Number(v.price) : Number(form.price),
         }))
       )
     }
@@ -150,7 +149,7 @@ export default function AdminProductsPage() {
     // Refresh list
     const { data: refreshed } = await supabase
       .from('products')
-      .select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty, price)')
+      .select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty)')
       .order('created_at', { ascending: false })
     setProducts(refreshed ?? [])
   }
@@ -223,8 +222,8 @@ export default function AdminProductsPage() {
                 className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Sale Price (₹)</label>
-              <input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: e.target.value })}
+              <label className="text-xs text-gray-500 block mb-1">Original Price (₹) — shows crossed out</label>
+              <input type="number" value={form.original_price} onChange={(e) => setForm({ ...form, original_price: e.target.value })}
                 className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
             </div>
             <div>
@@ -275,9 +274,7 @@ export default function AdminProductsPage() {
                   <input value={v.color_name} onChange={(e) => updateVariant(i, 'color_name', e.target.value)}
                     placeholder="Color" className="flex-1 border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-400" />
                   <input type="number" value={v.stock_qty} onChange={(e) => updateVariant(i, 'stock_qty', e.target.value)}
-                    placeholder="Stock" className="w-20 border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-400" />
-                  <input type="number" value={v.price} onChange={(e) => updateVariant(i, 'price', e.target.value)}
-                    placeholder="Price" className="w-24 border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-400" />
+                    placeholder="Stock qty" className="w-24 border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-400" />
                   <button onClick={() => removeVariant(i)} className="text-gray-400 hover:text-red-500 transition-colors"><X size={14} /></button>
                 </div>
               ))}
