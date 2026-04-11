@@ -8,6 +8,8 @@ import { CookieBanner } from '@/components/ui/CookieBanner'
 import { CartDrawer } from '@/components/drawers/CartDrawer'
 import { HelpDrawer } from '@/components/drawers/HelpDrawer'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: { default: 'Wilourin — Premium Indian Streetwear', template: '%s — Wilourin' },
   description: 'Premium Indian streetwear crafted for the bold and fearless. Shop men, women, and accessories.',

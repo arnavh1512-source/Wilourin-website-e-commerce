@@ -134,7 +134,7 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
     setSaving(true)
     const supabase = createClient()
     const { data: updated, error } = await supabase
-      .from('profiles').update({ full_name: data.full_name, phone: data.phone || null })
+      .from('profiles').update({ full_name: data.full_name, phone: data.phone || null } as any)
       .eq('id', user.id).select().single()
     setSaving(false)
     if (error) { addToast(error.message, 'error'); return }
