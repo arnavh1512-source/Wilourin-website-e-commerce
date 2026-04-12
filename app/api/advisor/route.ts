@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
+
+const schema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string().min(1).max(4000),
+  })).min(1).max(50),
+})
 
 function createAdminClient() {
   return createSupabaseClient(
@@ -12,6 +21,10 @@ function createAdminClient() {
 }
 
 export async function POST(req: NextRequest) {
+  // 30 requests per 15 minutes per IP (admin tool, generous limit)
+  const { allowed, retryAfterMs } = checkRateLimit(`adv:${getIP(req)}`, 30, 15 * 60 * 1000)
+  if (!allowed) return tooManyRequests(retryAfterMs)
+
   try {
     // Auth check — use cookie-based client to verify session
     const supabase = await createClient()
@@ -23,7 +36,10 @@ export async function POST(req: NextRequest) {
     const { data: adminRow } = await admin.from('admin_users').select('user_id').eq('user_id', user.id).single()
     if (!adminRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { messages } = await req.json()
+    const body = await req.json()
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { messages } = parsed.data
 
     // ── Gather real store insights (service role — sees everything) ──
     const now = new Date()
@@ -97,7 +113,7 @@ Keep responses focused and under 300 words unless the user asks for detail.`
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: systemPrompt,
-      messages: messages.map((m: { role: string; content: string }) => ({
+      messages: messages.map((m) => ({
         role: m.role,
         content: m.content,
       })),

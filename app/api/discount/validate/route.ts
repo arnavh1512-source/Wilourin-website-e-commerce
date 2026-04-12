@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
+
+const schema = z.object({
+  code: z.string().min(1).max(50).regex(/^[A-Z0-9_-]+$/i),
+  subtotal: z.number().min(0).max(1_000_000),
+})
 
 export async function POST(req: NextRequest) {
+  // 10 attempts per minute per IP
+  const { allowed, retryAfterMs } = checkRateLimit(`disc:${getIP(req)}`, 10, 60 * 1000)
+  if (!allowed) return tooManyRequests(retryAfterMs)
+
   try {
-    const { code, subtotal } = await req.json()
-    if (!code) return NextResponse.json({ valid: false, message: 'No code provided' })
+    const body = await req.json()
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) return NextResponse.json({ valid: false, message: 'Invalid request' }, { status: 400 })
+    const { code, subtotal } = parsed.data
 
     const admin = createAdminClient()
     const supabase = await createClient()

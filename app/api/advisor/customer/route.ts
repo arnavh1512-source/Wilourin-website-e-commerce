@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { z } from 'zod'
+import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
+
+const schema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string().min(1).max(2000),
+  })).min(1).max(50),
+})
 
 export async function POST(req: NextRequest) {
+  // 20 requests per 15 minutes per IP
+  const { allowed, retryAfterMs } = checkRateLimit(getIP(req), 20, 15 * 60 * 1000)
+  if (!allowed) return tooManyRequests(retryAfterMs)
+
   try {
-    const { messages } = await req.json()
+    const body = await req.json()
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { messages } = parsed.data
 
     // Fetch public product context — published products + categories only
     const admin = createAdminClient()
@@ -48,7 +64,7 @@ Guidelines:
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
       system: systemPrompt,
-      messages: messages.map((m: { role: string; content: string }) => ({
+      messages: messages.map((m) => ({
         role: m.role,
         content: m.content,
       })),

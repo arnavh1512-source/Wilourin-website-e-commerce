@@ -1,5 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const addressSchema = z.object({
+  full_name: z.string().min(2).max(100).trim(),
+  phone: z.string().regex(/^\d{10}$/, 'Must be 10 digits'),
+  line1: z.string().min(5).max(200).trim(),
+  line2: z.string().max(200).trim().optional(),
+  city: z.string().min(2).max(100).trim(),
+  state: z.string().min(2).max(100).trim(),
+  pincode: z.string().regex(/^\d{6}$/, 'Must be 6 digits'),
+  is_default: z.boolean().optional(),
+})
 
 export async function GET() {
   const supabase = await createClient()
@@ -18,13 +30,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json()
+  const parsed = addressSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
     .from('addresses')
-    .insert({ ...body, user_id: user.id })
+    .insert({ ...parsed.data, user_id: user.id })
     .select()
     .single()
 
@@ -33,14 +48,20 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const { id, ...body } = await request.json()
+  const raw = await request.json()
+  const { id, ...rest } = raw
+  if (!id || typeof id !== 'string') return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+
+  const parsed = addressSchema.safeParse(rest)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
     .from('addresses')
-    .update(body)
+    .update(parsed.data)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()

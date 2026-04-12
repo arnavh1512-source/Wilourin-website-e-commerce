@@ -1,5 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const profilePatchSchema = z.object({
+  full_name: z.string().min(2).max(100).trim().optional(),
+  phone: z.string().regex(/^\d{10}$/).optional().or(z.literal('')),
+  avatar_url: z.string().url().max(2000).optional(),
+}).strict() // reject any extra keys
 
 export async function GET() {
   const supabase = await createClient()
@@ -15,13 +22,16 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   const body = await request.json()
+  const parsed = profilePatchSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
     .from('profiles')
-    .update(body)
+    .update(parsed.data)
     .eq('id', user.id)
     .select()
     .single()

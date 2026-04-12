@@ -1,5 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
+
+const submitSchema = z.object({
+  submitter_name: z.string().min(2).max(100).trim(),
+  instagram_handle: z.string().max(50).regex(/^@?[\w.]+$/).optional().or(z.literal('')),
+  photo_url: z.string().url().max(2000),
+})
 
 export async function GET() {
   const supabase = await createClient()
@@ -14,15 +22,19 @@ export async function GET() {
   return NextResponse.json(data ?? [])
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // 3 submissions per hour per IP
+  const { allowed, retryAfterMs } = checkRateLimit(`lb:${getIP(request)}`, 3, 60 * 60 * 1000)
+  if (!allowed) return tooManyRequests(retryAfterMs)
+
   const supabase = await createClient()
 
   const body = await request.json()
-  const { submitter_name, instagram_handle, photo_url } = body
-
-  if (!submitter_name || !photo_url) {
-    return NextResponse.json({ error: 'Name and photo URL are required' }, { status: 400 })
+  const parsed = submitSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid submission data' }, { status: 400 })
   }
+  const { submitter_name, instagram_handle, photo_url } = parsed.data
 
   const { error } = await supabase.from('lookbook_submissions').insert({
     submitter_name,

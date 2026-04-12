@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
+import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
 
-const schema = z.object({ email: z.string().email() })
+const schema = z.object({ email: z.string().email().max(254) })
 
 export async function POST(req: NextRequest) {
+  // 3 signups per hour per IP
+  const { allowed, retryAfterMs } = checkRateLimit(`nl:${getIP(req)}`, 3, 60 * 60 * 1000)
+  if (!allowed) return tooManyRequests(retryAfterMs)
+
   try {
     const body = await req.json()
     const { email } = schema.parse(body)
