@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client' // used for Google OAuth and forgot password
 
 export default function LoginPage() {
   const sp = useSearchParams()
@@ -24,16 +24,25 @@ export default function LoginPage() {
     setLoading(true)
     setErrorMsg(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const json = await res.json()
 
-    if (error) {
-      setErrorMsg(error.message)
+      if (!res.ok) {
+        setErrorMsg(json.error ?? 'Sign in failed')
+        setLoading(false)
+        return
+      }
+
+      window.location.href = redirect
+    } catch {
+      setErrorMsg('Failed to connect. Please try again.')
       setLoading(false)
-      return
     }
-
-    window.location.href = redirect
   }
 
   const handleGoogle = async () => {
