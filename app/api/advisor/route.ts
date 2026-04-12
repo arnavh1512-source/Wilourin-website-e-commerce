@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       ordersByStatus: statusCounts,
     }
 
-    // ── Stream Claude response ─────────────────────────────
+    // ── Call Claude and return full response ──────────────
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
     const systemPrompt = `You are Wil, the AI business advisor for Wilourin — a premium Indian streetwear brand based in Ahmedabad. You have access to real-time store data.
@@ -113,35 +113,29 @@ Your role:
 
 Keep responses focused and under 300 words unless the user asks for detail.`
 
-    const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    })
+    let response: Awaited<ReturnType<typeof client.messages.create>>
+    try {
+      response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      })
+    } catch (aiErr) {
+      console.error('[advisor] anthropic error:', aiErr)
+      return NextResponse.json({ error: `Anthropic: ${String(aiErr)}` }, { status: 500 })
+    }
 
-    // Stream response back
-    const encoder = new TextEncoder()
-    const readable = new ReadableStream({
-      async start(controller) {
-        for await (const chunk of stream) {
-          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-            controller.enqueue(encoder.encode(chunk.delta.text))
-          }
-        }
-        controller.close()
-      },
-    })
-
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-      },
-    })
+    try {
+      const text = response.content
+        .filter((block) => block.type === 'text')
+        .map((block) => (block as { type: 'text'; text: string }).text)
+        .join('')
+      return NextResponse.json({ message: text })
+    } catch (parseErr) {
+      console.error('[advisor] parse error:', parseErr, JSON.stringify(response.content))
+      return NextResponse.json({ error: `Parse error: ${String(parseErr)}` }, { status: 500 })
+    }
   } catch (err) {
     console.error('[advisor] error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })

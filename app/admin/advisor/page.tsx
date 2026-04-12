@@ -49,27 +49,14 @@ export default function AdminAdvisorPage() {
         body: JSON.stringify({ messages: newMessages.slice(1) }),
       })
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}))
-        throw new Error(errJson.error ?? `Server error ${res.status}`)
-      }
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? `Server error ${res.status}`)
 
-      const reader = res.body?.getReader()
-      const decoder = new TextDecoder()
-      let accumulated = ''
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          accumulated += decoder.decode(value, { stream: true })
-          setMessages((prev) => {
-            const next = [...prev]
-            next[next.length - 1] = { role: 'assistant', content: accumulated }
-            return next
-          })
-        }
-      }
+      setMessages((prev) => {
+        const next = [...prev]
+        next[next.length - 1] = { role: 'assistant', content: json.message ?? '' }
+        return next
+      })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       setMessages((prev) => {
