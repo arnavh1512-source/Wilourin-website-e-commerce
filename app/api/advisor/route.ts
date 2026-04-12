@@ -112,6 +112,7 @@ Keep responses focused and under 300 words unless the user asks for detail.`
       },
     })
   } catch (err) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    console.error('[advisor] error:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
