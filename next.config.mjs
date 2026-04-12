@@ -19,7 +19,7 @@ const nextConfig = {
     return [
       {
         source: '/supabase-proxy/:path*',
-        destination: 'https://rznljjxrgpssuzwqiemv.supabase.co/:path*',
+        destination: 'https://fneqxkgotfjbqdsvozsk.supabase.co/:path*',
       },
     ]
   },
