@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 
 const BRAND = 'WILOURIN'
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*<>?/'
-const FRAMES = Math.ceil(1000 / 60) // ~16 frames @ 60fps = ~1 second of scramble
+const SCRAMBLE_DURATION_MS = 1000
+const INTERVAL_MS = 60
 
 function rand() {
   return CHARS[Math.floor(Math.random() * CHARS.length)]
@@ -16,49 +17,54 @@ export function GlitchIntro() {
   const [phase, setPhase] = useState<Phase>('idle')
   const textRef = useRef<HTMLSpanElement>(null)
 
+  // Effect 1: decide whether to show the intro
   useEffect(() => {
     if (window.location.pathname.startsWith('/admin')) return
-    if (localStorage.getItem('intro_seen')) return
-
+    if (sessionStorage.getItem('intro_seen')) return
     setPhase('visible')
+  }, [])
+
+  // Effect 2: start the scramble animation — only runs once the span is in the DOM
+  useEffect(() => {
+    if (phase !== 'visible') return
 
     const el = textRef.current
     if (!el) return
 
-    // Phase 1: scramble characters for ~1 second at 60fps
-    el.style.fontFamily = 'monospace'
-    el.style.letterSpacing = '0.2em'
     el.textContent = BRAND.split('').map(rand).join('')
 
-    let frame = 0
+    let elapsed = 0
     const scramble = setInterval(() => {
       el.textContent = BRAND.split('').map(rand).join('')
-      frame++
-      if (frame >= FRAMES) {
+      elapsed += INTERVAL_MS
+
+      if (elapsed >= SCRAMBLE_DURATION_MS) {
         clearInterval(scramble)
 
-        // Phase 2: resolve to real text
+        // Resolve to real text
         el.textContent = BRAND
         el.style.fontFamily = "'Helvetica Neue', Arial, sans-serif"
+        el.style.fontWeight = '900'
 
-        // Phase 3: RGB shadow fades out via CSS transition
-        el.style.textShadow = '5px 0 0 rgba(255,0,0,0.9), -5px 0 0 rgba(0,150,255,0.9)'
-        el.style.transition = 'text-shadow 0.4s ease-out'
+        // RGB glitch shadow — start bright
+        el.style.textShadow = '6px 0 0 rgba(255,0,0,0.9), -6px 0 0 rgba(0,150,255,0.9)'
+        el.style.transition = 'text-shadow 0.5s ease-out'
 
+        // Fade the shadow off on next paint
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             el.style.textShadow = '0px 0 0 rgba(255,0,0,0), 0px 0 0 rgba(0,150,255,0)'
           })
         })
       }
-    }, 60)
+    }, INTERVAL_MS)
 
-    // Phase 4: fade overlay out after 2.4s
+    // Fade the overlay out at 2.4s
     const fadeTimer = setTimeout(() => setPhase('fading'), 2400)
-    // Phase 5: unmount + set localStorage at 3s
+    // Unmount + mark seen at 3s
     const doneTimer = setTimeout(() => {
       setPhase('idle')
-      localStorage.setItem('intro_seen', '1')
+      sessionStorage.setItem('intro_seen', '1')
     }, 3000)
 
     return () => {
@@ -66,7 +72,7 @@ export function GlitchIntro() {
       clearTimeout(fadeTimer)
       clearTimeout(doneTimer)
     }
-  }, [])
+  }, [phase])
 
   if (phase === 'idle') return null
 
