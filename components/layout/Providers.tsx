@@ -10,16 +10,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         setProfile(null)
         setIsAdmin(false)
         return
       }
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-      if (profile) setProfile(profile)
-      const { data: admin } = await supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).single()
-      setIsAdmin(!!admin)
+      // Defer DB queries outside the signInWithPassword lock context.
+      // auth-js holds lockAcquired=true while notifying listeners; calling
+      // getSession() here would queue in pendingInLock and deadlock.
+      setTimeout(async () => {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+        if (profile) setProfile(profile)
+        const { data: admin } = await supabase.from('admin_users').select('user_id').eq('user_id', session.user.id).single()
+        setIsAdmin(!!admin)
+      }, 0)
     })
 
     return () => subscription.unsubscribe()
