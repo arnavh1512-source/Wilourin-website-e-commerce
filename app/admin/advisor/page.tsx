@@ -49,7 +49,8 @@ export default function AdminAdvisorPage() {
       })
 
       if (!res.ok) {
-        throw new Error('Failed to get response')
+        const errJson = await res.json().catch(() => ({}))
+        throw new Error(errJson.error ?? `Server error ${res.status}`)
       }
 
       const reader = res.body?.getReader()
@@ -68,10 +69,11 @@ export default function AdminAdvisorPage() {
           })
         }
       }
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
       setMessages((prev) => {
         const next = [...prev]
-        next[next.length - 1] = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+        next[next.length - 1] = { role: 'assistant', content: `Error: ${msg}` }
         return next
       })
     } finally {

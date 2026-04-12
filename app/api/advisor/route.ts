@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+function createAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth check — admin only
+    // Auth check — use cookie-based client to verify session
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: adminRow } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).single()
+    // Admin check — service role bypasses RLS reliably
+    const admin = createAdminClient()
+    const { data: adminRow } = await admin.from('admin_users').select('user_id').eq('user_id', user.id).single()
     if (!adminRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { messages } = await req.json()
 
-    // ── Gather real store insights ─────────────────────────
+    // ── Gather real store insights (service role — sees everything) ──
     const now = new Date()
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
@@ -28,13 +39,13 @@ export async function POST(req: NextRequest) {
       { data: ordersByStatus },
       { data: products },
     ] = await Promise.all([
-      supabase.from('orders').select('total').eq('payment_status', 'Paid'),
-      supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfMonth),
-      supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth),
-      supabase.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
-      supabase.from('orders').select('id').eq('order_status', 'Refund Requested'),
-      supabase.from('orders').select('order_status'),
-      supabase.from('products').select('id, name, status').eq('status', 'Published'),
+      admin.from('orders').select('total').eq('payment_status', 'Paid'),
+      admin.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfMonth),
+      admin.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth),
+      admin.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
+      admin.from('orders').select('id').eq('order_status', 'Refund Requested'),
+      admin.from('orders').select('order_status'),
+      admin.from('products').select('id, name, status').eq('status', 'Published'),
     ])
 
     const totalRevenue = (paidOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
