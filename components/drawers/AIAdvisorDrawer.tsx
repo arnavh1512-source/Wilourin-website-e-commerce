@@ -53,10 +53,14 @@ export function AIAdvisorDrawer() {
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
     try {
+      // Anthropic requires the first message to be from 'user'.
+      // Index 0 is always the UI-only greeting bubble — skip it.
+      const apiMessages = newMessages.slice(1)
+
       const res = await fetch('/api/advisor/customer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: apiMessages }),
       })
 
       if (!res.ok || !res.body) throw new Error('Failed')
