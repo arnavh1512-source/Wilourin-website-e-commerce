@@ -2,19 +2,9 @@ import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/types'
 
 // ── Web Lock bypass ────────────────────────────────────────────────────────────
-// Supabase auth-js uses navigator.locks.request() to serialize all auth
-// operations across tabs. In a Next.js app this causes deadlocks: multiple
-// concurrent callers (onAuthStateChange, signInWithPassword, getSession called
-// internally by every DB query) all compete for the same named lock.
-//
-// The server-side middleware validates the session on every request, so the
-// client-side lock is redundant for security. We disable it by replacing
-// navigator.locks.request with a shim that immediately invokes the callback.
-//
-// We patch the browser API directly rather than just the Supabase client option
-// because createBrowserClient caches a singleton — if the singleton was created
-// before our option reached it (common during Fast Refresh), the option is
-// silently ignored. The browser-level patch has no such caveat.
+// Supabase auth-js serialises every auth operation behind a navigator.locks
+// named lock. In a Next.js app several callers (onAuthStateChange, signIn,
+// getSession triggered by DB queries) race for the same lock and deadlock.
 if (typeof window !== 'undefined' && window.navigator?.locks) {
   ;(window.navigator.locks as any).request = async (
     _name: string,
@@ -26,9 +16,37 @@ if (typeof window !== 'undefined' && window.navigator?.locks) {
   }
 }
 
+const noOpLock = async (
+  _name: string,
+  _acquireTimeout: number,
+  fn: () => Promise<unknown>
+) => fn()
+
 export function createClient() {
+  const isClient = typeof window !== 'undefined'
+
+  // ── Proxy fetch (browser only) ──────────────────────────────────────────────
+  // We MUST keep the real Supabase URL as supabaseUrl so the storage key
+  // (sb-rznljjxrgpssuzwqiemv-auth-token) matches what the server-side client
+  // reads from cookies. But we rewrite every outgoing fetch to go through the
+  // Vercel rewrite proxy so the browser never dials Supabase directly
+  // (avoids IPv6-only endpoints that some ISPs can't reach).
+  const proxyFetch: typeof fetch | undefined = isClient
+    ? async (input: RequestInfo | URL, init?: RequestInit) => {
+        const original = process.env.NEXT_PUBLIC_SUPABASE_URL!
+        const proxied = input
+          .toString()
+          .replace(original, `${window.location.origin}/supabase-proxy`)
+        return fetch(proxied, init)
+      }
+    : undefined
+
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: { lock: noOpLock },
+      global: { fetch: proxyFetch },
+    }
   )
 }

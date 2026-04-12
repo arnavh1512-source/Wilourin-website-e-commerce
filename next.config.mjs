@@ -15,6 +15,14 @@ const nextConfig = {
   experimental: {
     serverActions: { allowedOrigins: ['localhost:3000'] },
   },
+  async rewrites() {
+    return [
+      {
+        source: '/supabase-proxy/:path*',
+        destination: 'https://rznljjxrgpssuzwqiemv.supabase.co/:path*',
+      },
+    ]
+  },
 }
 
 export default nextConfig
