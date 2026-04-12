@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
@@ -10,8 +9,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const admin = createAdminClient()
-    const { data: adminRow } = await admin.from('admin_users').select('user_id').eq('user_id', user.id).single()
+    const { data: adminRow } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).single()
     if (!adminRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { messages } = await req.json()
@@ -30,13 +28,13 @@ export async function POST(req: NextRequest) {
       { data: ordersByStatus },
       { data: products },
     ] = await Promise.all([
-      admin.from('orders').select('total').eq('payment_status', 'Paid'),
-      admin.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfMonth),
-      admin.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth),
-      admin.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
-      admin.from('orders').select('id').eq('order_status', 'Refund Requested'),
-      admin.from('orders').select('order_status'),
-      admin.from('products').select('id, name, status').eq('status', 'Published'),
+      supabase.from('orders').select('total').eq('payment_status', 'Paid'),
+      supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfMonth),
+      supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth),
+      supabase.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
+      supabase.from('orders').select('id').eq('order_status', 'Refund Requested'),
+      supabase.from('orders').select('order_status'),
+      supabase.from('products').select('id, name, status').eq('status', 'Published'),
     ])
 
     const totalRevenue = (paidOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
@@ -85,7 +83,7 @@ Your role:
 Keep responses focused and under 300 words unless the user asks for detail.`
 
     const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({
