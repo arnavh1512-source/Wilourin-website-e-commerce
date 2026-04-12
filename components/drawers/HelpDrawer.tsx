@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageCircle, X, ChevronDown, ChevronUp, Bot } from 'lucide-react'
+import { MessageCircle, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { useUIStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
@@ -15,23 +15,13 @@ const FAQS = [
 ]
 
 export function HelpDrawer() {
-  const { isHelpOpen, toggleHelp, toggleAdvisor } = useUIStore()
+  const { isHelpOpen, toggleHelp } = useUIStore()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
     <>
       {/* Fixed help button */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
-        {/* AI Advisor button */}
-        <button
-          onClick={toggleAdvisor}
-          className="flex items-center gap-2 bg-[#0A0A0A] text-white text-xs px-4 py-2.5 rounded-full shadow-lg hover:bg-gray-800 transition-all hover:scale-105"
-          aria-label="AI Advisor"
-        >
-          <Bot size={14} />
-          <span className="hidden sm:inline">AI Advisor</span>
-        </button>
-
         {/* WhatsApp + Help button */}
         <button
           onClick={toggleHelp}
