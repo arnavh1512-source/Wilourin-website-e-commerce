@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Search, Crown } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { formatDate, getLoyaltyTier } from '@/lib/utils'
 
 export default function AdminCustomersPage() {
@@ -13,15 +12,9 @@ export default function AdminCustomersPage() {
   useEffect(() => {
     const run = async () => {
       try {
-        const supabase = createClient()
-        const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-        if (!profiles) return
-        const enriched = await Promise.all(profiles.map(async (p) => {
-          const { data: orders } = await supabase.from('orders').select('total').eq('user_id', p.id).eq('payment_status', 'Paid')
-          const totalSpent = (orders ?? []).reduce((s, o) => s + Number(o.total), 0)
-          return { ...p, orderCount: orders?.length ?? 0, totalSpent: Math.round(totalSpent) }
-        }))
-        setCustomers(enriched)
+        const res = await fetch('/api/admin/customers')
+        const data = await res.json()
+        setCustomers(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error('[Customers] load threw:', err)
       } finally {

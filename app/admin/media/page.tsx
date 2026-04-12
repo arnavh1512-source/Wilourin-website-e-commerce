@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { Upload, Copy, Check, Trash2, RefreshCw } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 
 export default function AdminMediaPage() {
@@ -17,15 +16,9 @@ export default function AdminMediaPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { data } = await supabase.storage.from('product-images').list('', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
-      if (data) {
-        const enriched = data.filter((f) => f.name !== '.emptyFolderPlaceholder').map((f) => {
-          const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(f.name)
-          return { ...f, url: publicUrl }
-        })
-        setFiles(enriched)
-      }
+      const res = await fetch('/api/admin/media')
+      const data = await res.json()
+      setFiles(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('[Media] load threw:', err)
     } finally {
@@ -59,10 +52,15 @@ export default function AdminMediaPage() {
 
   const deleteFile = async (name: string) => {
     if (!confirm('Delete this file?')) return
-    const supabase = createClient()
-    await supabase.storage.from('product-images').remove([name])
-    setFiles((prev) => prev.filter((f) => f.name !== name))
-    addToast('File deleted', 'success')
+    const res = await fetch('/api/admin/media', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    if (res.ok) {
+      setFiles((prev) => prev.filter((f) => f.name !== name))
+      addToast('File deleted', 'success')
+    }
   }
 
   const isImage = (name: string) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name)

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 import { formatDate } from '@/lib/utils'
 
@@ -15,13 +14,10 @@ export default function AdminLoyaltyPage() {
   useEffect(() => {
     const run = async () => {
       try {
-        const supabase = createClient()
-        const [{ data: s }, { data: t }] = await Promise.all([
-          supabase.from('store_settings').select('loyalty_points_per_rupee').eq('id', 1).single(),
-          supabase.from('loyalty_transactions').select('*, profiles(full_name)').order('created_at', { ascending: false }).limit(50),
-        ])
-        setSettings(s)
-        setTransactions(t ?? [])
+        const res = await fetch('/api/admin/loyalty')
+        const data = await res.json()
+        setSettings(data.settings)
+        setTransactions(data.transactions ?? [])
       } catch (err) {
         console.error('[Loyalty] load threw:', err)
       } finally {
@@ -33,12 +29,14 @@ export default function AdminLoyaltyPage() {
 
   const handleSave = async () => {
     setSaving(true)
-    const supabase = createClient()
-    await supabase.from('store_settings').update({
-      loyalty_points_per_rupee: settings.loyalty_points_per_rupee,
-    }).eq('id', 1)
+    const res = await fetch('/api/admin/loyalty', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loyalty_points_per_rupee: settings.loyalty_points_per_rupee }),
+    })
     setSaving(false)
-    addToast('Loyalty settings saved', 'success')
+    if (res.ok) addToast('Loyalty settings saved', 'success')
+    else addToast('Save failed', 'error')
   }
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" /></div>

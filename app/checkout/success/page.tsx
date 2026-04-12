@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, Package, ArrowRight } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import type { Order } from '@/lib/types'
 
 export default function OrderSuccessPage() {
@@ -14,9 +13,9 @@ export default function OrderSuccessPage() {
 
   useEffect(() => {
     if (!orderNumber) return
-    const supabase = createClient()
-    supabase.from('orders').select('*').eq('order_number', orderNumber).single()
-      .then(({ data }) => setOrder(data))
+    fetch(`/api/store/order?order_number=${encodeURIComponent(orderNumber)}`)
+      .then((r) => r.json())
+      .then((data) => { if (data && !data.error) setOrder(data) })
   }, [orderNumber])
 
   const deliveryDays = order?.shipping_method === 'Express' ? '2–3' : '5–7'

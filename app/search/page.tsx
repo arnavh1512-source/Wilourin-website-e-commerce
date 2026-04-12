@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, X, Clock } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { SkeletonGrid } from '@/components/ui/SkeletonCard'
 import { debounce } from '@/lib/utils'
@@ -43,14 +42,10 @@ export default function SearchPage() {
       if (!q.trim()) { setResults([]); return }
       setLoading(true)
       try {
-        const supabase = createClient()
-        const { data } = await supabase
-          .from('products')
-          .select('id, name, slug, price, original_price, badge, product_images(image_url, is_primary)')
-          .eq('status', 'Published')
-          .or(`name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`)
-          .limit(24)
-        setResults((data as ProductResult[]) ?? [])
+        const params = new URLSearchParams({ search: q })
+        const res = await fetch(`/api/store/products?${params.toString()}`)
+        const data = await res.json()
+        setResults(Array.isArray(data) ? (data as ProductResult[]) : [])
       } catch (err) {
         console.error('[Search] doSearch threw:', err)
         setResults([])

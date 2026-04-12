@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { Search, Printer, ChevronDown, Bell } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Search, Printer, Bell } from 'lucide-react'
 import { formatDate, formatPrice } from '@/lib/utils'
 
 const STATUSES = ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Refund Requested']
@@ -25,17 +24,16 @@ export default function AdminOrdersPage() {
   const [selected, setSelected] = useState<any | null>(null)
   const [saving, setSaving] = useState(false)
   const [newOrderAlert, setNewOrderAlert] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      let q = supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false })
-      if (statusFilter) q = q.eq('order_status', statusFilter)
-      if (search) q = q.or(`order_number.ilike.%${search}%,guest_email.ilike.%${search}%`)
-      const { data } = await q
-      setOrders(data ?? [])
+      const params = new URLSearchParams()
+      if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
+      const res = await fetch(`/api/admin/orders?${params.toString()}`)
+      const data = await res.json()
+      setOrders(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('[Orders] fetchOrders threw:', err)
     } finally {
@@ -45,25 +43,16 @@ export default function AdminOrdersPage() {
 
   useEffect(() => { fetchOrders() }, [search, statusFilter])
 
-  // Realtime new orders
-  useEffect(() => {
-    const supabase = createClient()
-    const channel = supabase.channel('admin-orders')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
-        setOrders((prev) => [payload.new as any, ...prev])
-        setNewOrderAlert(true)
-        setTimeout(() => setNewOrderAlert(false), 5000)
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [])
-
   const updateOrder = async (id: string, fields: Record<string, any>) => {
     setSaving(true)
-    const supabase = createClient()
-    const { data, error } = await supabase.from('orders').update(fields).eq('id', id).select().single()
+    const res = await fetch('/api/admin/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, fields }),
+    })
     setSaving(false)
-    if (!error && data) {
+    if (res.ok) {
+      const data = await res.json()
       setOrders((prev) => prev.map((o) => o.id === id ? { ...o, ...data } : o))
       setSelected((prev: any) => prev?.id === id ? { ...prev, ...data } : prev)
     }

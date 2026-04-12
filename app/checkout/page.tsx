@@ -7,7 +7,6 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Lock, ChevronRight, Tag, Coins, Truck } from 'lucide-react'
 import { useCartStore, useUserStore, useToastStore } from '@/lib/store'
-import { createClient } from '@/lib/supabase/client'
 import { formatPrice, INDIAN_STATES } from '@/lib/utils'
 import type { Address } from '@/lib/types'
 
@@ -65,9 +64,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (items.length === 0) { router.replace('/'); return }
 
-    // Load store settings + saved addresses
-    const supabase = createClient()
-    supabase.from('store_settings').select('*').eq('id', 1).single().then(({ data }) => {
+    // Load store settings
+    fetch('/api/store/settings').then((r) => r.json()).then((data) => {
       if (data) setStoreSettings({
         freeThreshold: data.free_shipping_threshold,
         standardCost: data.standard_shipping_cost,
@@ -78,15 +76,16 @@ export default function CheckoutPage() {
       })
     })
 
+    // Load saved addresses
     if (profile) {
-      supabase.from('addresses').select('*').eq('user_id', profile.id).order('is_default', { ascending: false })
-        .then(({ data }) => {
-          setSavedAddresses(data ?? [])
-          const def = data?.find((a) => a.is_default)
-          if (def) setSelectedAddressId(def.id)
-          else if (data?.length) setSelectedAddressId(data[0].id)
-          else setUseNewAddress(true)
-        })
+      fetch('/api/account/addresses').then((r) => r.json()).then((data) => {
+        const addresses = Array.isArray(data) ? data : []
+        setSavedAddresses(addresses)
+        const def = addresses.find((a: any) => a.is_default)
+        if (def) setSelectedAddressId(def.id)
+        else if (addresses.length) setSelectedAddressId(addresses[0].id)
+        else setUseNewAddress(true)
+      })
     } else {
       setUseNewAddress(true)
     }

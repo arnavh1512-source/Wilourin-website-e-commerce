@@ -12,7 +12,6 @@ const InstagramIcon = () => (
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 import type { LookbookSubmission } from '@/lib/types'
 
@@ -37,14 +36,16 @@ export function LookbookClient({ submissions }: Props) {
   const onSubmit = async (data: FormData) => {
     setSubmitting(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.from('lookbook_submissions').insert({
-        submitter_name: data.submitter_name,
-        instagram_handle: data.instagram_handle || null,
-        photo_url: data.photo_url,
-        status: 'Pending',
+      const res = await fetch('/api/store/lookbook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submitter_name: data.submitter_name,
+          instagram_handle: data.instagram_handle || null,
+          photo_url: data.photo_url,
+        }),
       })
-      if (error) {
+      if (!res.ok) {
         addToast('Failed to submit. Please try again.', 'error')
       } else {
         addToast('Look submitted! Pending admin approval.', 'success')

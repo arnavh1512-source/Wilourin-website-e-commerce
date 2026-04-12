@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { Upload } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 
 export default function AdminSettingsPage() {
@@ -16,8 +15,8 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     const run = async () => {
       try {
-        const supabase = createClient()
-        const { data } = await supabase.from('store_settings').select('*').eq('id', 1).single()
+        const res = await fetch('/api/admin/settings')
+        const data = await res.json()
         setSettings(data ?? {})
       } catch (err) {
         console.error('[Settings] load threw:', err)
@@ -43,23 +42,25 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     setSaving(true)
-    const supabase = createClient()
-    const { error } = await supabase.from('store_settings').upsert({
-      id: 1,
-      store_name: settings.store_name,
-      contact_email: settings.contact_email,
-      contact_phone: settings.contact_phone,
-      address: settings.address,
-      logo_url: settings.logo_url,
-      currency: settings.currency,
-      free_shipping_threshold: settings.free_shipping_threshold,
-      standard_shipping_cost: settings.standard_shipping_cost,
-      express_shipping_cost: settings.express_shipping_cost,
-      instagram_url: settings.instagram_url,
+    const res = await fetch('/api/admin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        store_name: settings.store_name,
+        contact_email: settings.contact_email,
+        contact_phone: settings.contact_phone,
+        address: settings.address,
+        logo_url: settings.logo_url,
+        currency: settings.currency,
+        free_shipping_threshold: settings.free_shipping_threshold,
+        standard_shipping_cost: settings.standard_shipping_cost,
+        express_shipping_cost: settings.express_shipping_cost,
+        instagram_url: settings.instagram_url,
+      }),
     })
     setSaving(false)
-    if (error) addToast(error.message, 'error')
-    else addToast('Settings saved!', 'success')
+    if (res.ok) addToast('Settings saved!', 'success')
+    else addToast('Save failed', 'error')
   }
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" /></div>

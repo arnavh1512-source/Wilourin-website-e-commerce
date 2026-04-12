@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { Plus, Pencil, Trash2, X, Upload } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 import { slugify } from '@/lib/utils'
 
@@ -21,9 +20,9 @@ export default function AdminCategoriesPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { data } = await supabase.from('categories').select('*, parent:parent_id(name)').order('name')
-      setCategories(data ?? [])
+      const res = await fetch('/api/admin/categories')
+      const data = await res.json()
+      setCategories(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('[Categories] load threw:', err)
     } finally {
@@ -61,7 +60,6 @@ export default function AdminCategoriesPage() {
   const handleSave = async () => {
     if (!form.name) { addToast('Name is required', 'error'); return }
     setSaving(true)
-    const supabase = createClient()
     const data = {
       name: form.name,
       slug: form.slug || slugify(form.name),
@@ -69,24 +67,39 @@ export default function AdminCategoriesPage() {
       parent_id: form.parent_id || null,
       image_url: form.image_url || null,
     }
-    if (editing) {
-      await supabase.from('categories').update(data).eq('id', editing.id)
-      addToast('Category updated', 'success')
-    } else {
-      await supabase.from('categories').insert(data)
-      addToast('Category created', 'success')
+
+    try {
+      if (editing) {
+        await fetch('/api/admin/categories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editing.id, ...data }),
+        })
+        addToast('Category updated', 'success')
+      } else {
+        await fetch('/api/admin/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        addToast('Category created', 'success')
+      }
+      setShowForm(false)
+      load()
+    } catch (err) {
+      addToast('Save failed', 'error')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    setShowForm(false)
-    load()
   }
 
   const deleteCategory = async (id: string) => {
     if (!confirm('Delete this category?')) return
-    const supabase = createClient()
-    await supabase.from('categories').delete().eq('id', id)
-    setCategories((prev) => prev.filter((c) => c.id !== id))
-    addToast('Category deleted', 'success')
+    const res = await fetch(`/api/admin/categories?id=${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setCategories((prev) => prev.filter((c) => c.id !== id))
+      addToast('Category deleted', 'success')
+    }
   }
 
   const parents = categories.filter((c) => !c.parent_id)

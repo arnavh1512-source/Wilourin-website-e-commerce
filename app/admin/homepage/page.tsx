@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 
 export default function AdminHomepagePage() {
@@ -15,15 +14,11 @@ export default function AdminHomepagePage() {
   useEffect(() => {
     const run = async () => {
       try {
-        const supabase = createClient()
-        const [{ data: s }, { data: p }, { data: c }] = await Promise.all([
-          supabase.from('homepage_settings').select('*').eq('id', 1).single(),
-          supabase.from('products').select('id, name').eq('status', 'Published').order('name'),
-          supabase.from('categories').select('id, name').order('name'),
-        ])
-        setSettings(s ?? {})
-        setProducts(p ?? [])
-        setCategories(c ?? [])
+        const res = await fetch('/api/admin/homepage')
+        const data = await res.json()
+        setSettings(data.settings ?? {})
+        setProducts(data.products ?? [])
+        setCategories(data.categories ?? [])
       } catch (err) {
         console.error('[Homepage] load threw:', err)
       } finally {
@@ -35,19 +30,21 @@ export default function AdminHomepagePage() {
 
   const handleSave = async () => {
     setSaving(true)
-    const supabase = createClient()
-    const { error } = await supabase.from('homepage_settings').upsert({
-      id: 1,
-      announcement_text: settings.announcement_text,
-      hero_headline: settings.hero_headline,
-      hero_subtext: settings.hero_subtext,
-      hero_image_url: settings.hero_image_url,
-      featured_product_ids: settings.featured_product_ids,
-      featured_category_ids: settings.featured_category_ids,
+    const res = await fetch('/api/admin/homepage', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        announcement_text: settings.announcement_text,
+        hero_headline: settings.hero_headline,
+        hero_subtext: settings.hero_subtext,
+        hero_image_url: settings.hero_image_url,
+        featured_product_ids: settings.featured_product_ids,
+        featured_category_ids: settings.featured_category_ids,
+      }),
     })
     setSaving(false)
-    if (error) addToast(error.message, 'error')
-    else addToast('Homepage updated!', 'success')
+    if (res.ok) addToast('Homepage updated!', 'success')
+    else addToast('Save failed', 'error')
   }
 
   const toggleProduct = (id: string) => {

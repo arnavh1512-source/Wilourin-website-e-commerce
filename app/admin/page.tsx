@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  TrendingUp, TrendingDown, ShoppingBag, Package,
+  TrendingUp, ShoppingBag, Package,
   Users, AlertTriangle, RefreshCw, ArrowRight
 } from 'lucide-react'
-import { createAdminClientBrowser } from '@/lib/supabase/admin-browser'
-import { formatPrice, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 interface DashboardStats {
   totalRevenue: number
@@ -21,7 +20,6 @@ interface DashboardStats {
   recentOrders: any[]
   lowStockItems: any[]
   ordersByStatus: Record<string, number>
-  revenueByMonth: { month: string; revenue: number }[]
 }
 
 export default function AdminDashboard() {
@@ -31,71 +29,13 @@ export default function AdminDashboard() {
   const load = async () => {
     setLoading(true)
     try {
-    const admin = createAdminClientBrowser()
-    const now = new Date()
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
-
-    const [
-      { data: paidOrders, error: e1 },
-      { data: thisMonthOrders },
-      { data: lastMonthOrders },
-      { data: allOrders },
-      { data: customers },
-      { data: lowStock },
-      { data: recentOrders },
-    ] = await Promise.all([
-      admin.from('orders').select('total').eq('payment_status', 'Paid'),
-      admin.from('orders').select('total, id').eq('payment_status', 'Paid').gte('created_at', firstOfMonth),
-      admin.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth),
-      admin.from('orders').select('order_status'),
-      admin.from('profiles').select('id'),
-      admin.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
-      admin.from('orders').select('*, order_items(product_name, quantity)').order('created_at', { ascending: false }).limit(5),
-    ])
-
-    if (e1) console.error('[Admin Dashboard] DB error:', e1.message)
-
-    const totalRevenue = (paidOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
-    const thisMonthRevenue = (thisMonthOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
-    const lastMonthRevenue = (lastMonthOrders ?? []).reduce((s, o) => s + Number(o.total), 0)
-
-    const statusCounts: Record<string, number> = {}
-    for (const o of allOrders ?? []) {
-      statusCounts[o.order_status] = (statusCounts[o.order_status] ?? 0) + 1
-    }
-
-    // Last 6 months revenue
-    const revenueByMonth: { month: string; revenue: number }[] = []
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const label = d.toLocaleDateString('en-IN', { month: 'short' })
-      revenueByMonth.push({ month: label, revenue: 0 })
-    }
-    // We'll just show static labels since we don't want another query
-    const maxRev = Math.max(...revenueByMonth.map((m) => m.revenue), thisMonthRevenue, lastMonthRevenue, 1)
-
-    setStats({
-      totalRevenue: Math.round(totalRevenue),
-      thisMonthRevenue: Math.round(thisMonthRevenue),
-      lastMonthRevenue: Math.round(lastMonthRevenue),
-      totalOrders: (allOrders ?? []).length,
-      thisMonthOrders: (thisMonthOrders ?? []).length,
-      totalCustomers: (customers ?? []).length,
-      pendingOrders: statusCounts['Confirmed'] ?? 0,
-      lowStockCount: (lowStock ?? []).length,
-      recentOrders: recentOrders ?? [],
-      lowStockItems: (lowStock ?? []).slice(0, 5).map((v: any) => ({
-        product: v.products?.name ?? 'Unknown',
-        size: v.size,
-        qty: v.stock_qty,
-      })),
-      ordersByStatus: statusCounts,
-      revenueByMonth,
-    })
-    setLoading(false)
+      const res = await fetch('/api/admin/dashboard')
+      if (!res.ok) throw new Error('Failed to load dashboard')
+      const data = await res.json()
+      setStats(data)
     } catch (err) {
       console.error('[Admin Dashboard] load() threw:', err)
+    } finally {
       setLoading(false)
     }
   }

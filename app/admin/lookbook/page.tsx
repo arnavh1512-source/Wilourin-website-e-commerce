@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Check, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 import { formatDate } from '@/lib/utils'
 
@@ -16,11 +15,11 @@ export default function AdminLookbookPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      let q = supabase.from('lookbook_submissions').select('*').order('created_at', { ascending: false })
-      if (filter) q = q.eq('status', filter)
-      const { data } = await q
-      setSubmissions(data ?? [])
+      const params = new URLSearchParams()
+      if (filter) params.set('status', filter)
+      const res = await fetch(`/api/admin/lookbook?${params.toString()}`)
+      const data = await res.json()
+      setSubmissions(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('[Lookbook] load threw:', err)
     } finally {
@@ -31,10 +30,15 @@ export default function AdminLookbookPage() {
   useEffect(() => { load() }, [filter])
 
   const update = async (id: string, status: string) => {
-    const supabase = createClient()
-    await supabase.from('lookbook_submissions').update({ status }).eq('id', id)
-    setSubmissions((prev) => prev.filter((s) => s.id !== id))
-    addToast(`Submission ${status.toLowerCase()}`, status === 'Approved' ? 'success' : 'info')
+    const res = await fetch('/api/admin/lookbook', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    if (res.ok) {
+      setSubmissions((prev) => prev.filter((s) => s.id !== id))
+      addToast(`Submission ${status.toLowerCase()}`, status === 'Approved' ? 'success' : 'info')
+    }
   }
 
   return (

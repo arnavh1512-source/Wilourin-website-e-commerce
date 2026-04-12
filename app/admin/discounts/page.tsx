@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, X, Copy, Check } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 import { formatDate } from '@/lib/utils'
 
@@ -25,10 +24,9 @@ export default function AdminDiscountsPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase.from('discount_codes').select('*').order('created_at', { ascending: false })
-      if (error) console.error('[Discounts] query error:', error)
-      setCodes(data ?? [])
+      const res = await fetch('/api/admin/discounts')
+      const data = await res.json()
+      setCodes(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('[Discounts] load threw:', err)
     } finally {
@@ -57,7 +55,6 @@ export default function AdminDiscountsPage() {
   const handleSave = async () => {
     if (!form.code || !form.value) { addToast('Code and value are required', 'error'); return }
     setSaving(true)
-    const supabase = createClient()
     const data = {
       code: form.code.toUpperCase(),
       type: form.type,
@@ -67,24 +64,39 @@ export default function AdminDiscountsPage() {
       expiry_date: form.expiry_date ? new Date(form.expiry_date).toISOString() : null,
       is_active: form.is_active,
     }
-    if (editing) {
-      await supabase.from('discount_codes').update(data).eq('id', editing.id)
-      addToast('Discount updated', 'success')
-    } else {
-      await supabase.from('discount_codes').insert(data)
-      addToast('Discount created', 'success')
+
+    try {
+      if (editing) {
+        await fetch('/api/admin/discounts', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editing.id, ...data }),
+        })
+        addToast('Discount updated', 'success')
+      } else {
+        await fetch('/api/admin/discounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        addToast('Discount created', 'success')
+      }
+      setShowForm(false)
+      load()
+    } catch (err) {
+      addToast('Save failed', 'error')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    setShowForm(false)
-    load()
   }
 
   const deleteCode = async (id: string) => {
     if (!confirm('Delete this discount code?')) return
-    const supabase = createClient()
-    await supabase.from('discount_codes').delete().eq('id', id)
-    setCodes((prev) => prev.filter((c) => c.id !== id))
-    addToast('Deleted', 'success')
+    const res = await fetch(`/api/admin/discounts?id=${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setCodes((prev) => prev.filter((c) => c.id !== id))
+      addToast('Deleted', 'success')
+    }
   }
 
   const copyCode = (code: string) => {
@@ -94,8 +106,11 @@ export default function AdminDiscountsPage() {
   }
 
   const toggleActive = async (id: string, current: boolean) => {
-    const supabase = createClient()
-    await supabase.from('discount_codes').update({ is_active: !current }).eq('id', id)
+    await fetch('/api/admin/discounts', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, is_active: !current }),
+    })
     setCodes((prev) => prev.map((c) => c.id === id ? { ...c, is_active: !current } : c))
   }
 

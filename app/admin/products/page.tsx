@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
-import { Plus, Pencil, Trash2, Upload, X, Search, ChevronDown, ChevronUp } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Plus, Pencil, Trash2, Upload, X, Search } from 'lucide-react'
 import { useToastStore } from '@/lib/store'
 import { slugify } from '@/lib/utils'
 
@@ -18,7 +17,6 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<any | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     name: '', slug: '', description: '', category_id: '', price: '', original_price: '',
@@ -30,24 +28,23 @@ export default function AdminProductsPage() {
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const supabase = createClient()
-        const [{ data: p }, { data: c }] = await Promise.all([
-          supabase.from('products').select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty)').order('created_at', { ascending: false }),
-          supabase.from('categories').select('id, name').order('name'),
-        ])
-        setProducts(p ?? [])
-        setCategories(c ?? [])
-      } catch (err) {
-        console.error('[Products] load threw:', err)
-      } finally {
-        setLoading(false)
-      }
+  const loadData = async () => {
+    try {
+      const [pRes, cRes] = await Promise.all([
+        fetch('/api/admin/products'),
+        fetch('/api/admin/categories'),
+      ])
+      const [p, c] = await Promise.all([pRes.json(), cRes.json()])
+      setProducts(Array.isArray(p) ? p : [])
+      setCategories(Array.isArray(c) ? c : [])
+    } catch (err) {
+      console.error('[Products] load threw:', err)
+    } finally {
+      setLoading(false)
     }
-    run()
-  }, [])
+  }
+
+  useEffect(() => { loadData() }, [])
 
   const openAdd = () => {
     setEditing(null)
@@ -104,7 +101,6 @@ export default function AdminProductsPage() {
   const handleSave = async () => {
     if (!form.name || !form.price) { addToast('Name and price are required', 'error'); return }
     setSaving(true)
-    const supabase = createClient()
 
     const productData = {
       name: form.name,
@@ -119,54 +115,45 @@ export default function AdminProductsPage() {
       meta_description: form.meta_description || null,
     }
 
-    let productId = editing?.id
-    if (editing) {
-      await supabase.from('products').update(productData).eq('id', productId)
-    } else {
-      const { data, error } = await supabase.from('products').insert(productData).select('id').single()
-      if (error) { addToast(error.message, 'error'); setSaving(false); return }
-      productId = data.id
+    try {
+      if (editing) {
+        const res = await fetch('/api/admin/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editing.id, productData, variants, images }),
+        })
+        if (!res.ok) throw new Error('Update failed')
+      } else {
+        const res = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productData, variants, images }),
+        })
+        if (!res.ok) {
+          const err = await res.json()
+          addToast(err.error ?? 'Create failed', 'error')
+          setSaving(false)
+          return
+        }
+      }
+
+      addToast(`Product ${editing ? 'updated' : 'created'}!`, 'success')
+      setShowForm(false)
+      await loadData()
+    } catch (err) {
+      addToast('Save failed', 'error')
+    } finally {
+      setSaving(false)
     }
-
-    // Upsert images
-    if (images.length) {
-      if (editing) await supabase.from('product_images').delete().eq('product_id', productId)
-      await supabase.from('product_images').insert(
-        images.map((img, i) => ({ product_id: productId, image_url: img.url, is_primary: img.isPrimary, display_order: i }))
-      )
-    }
-
-    // Upsert variants
-    if (editing) await supabase.from('product_variants').delete().eq('product_id', productId)
-    if (variants.length) {
-      await supabase.from('product_variants').insert(
-        variants.map((v) => ({
-          product_id: productId,
-          size: v.size,
-          color_name: v.color_name,
-          stock_qty: Number(v.stock_qty),
-        }))
-      )
-    }
-
-    setSaving(false)
-    addToast(`Product ${editing ? 'updated' : 'created'}!`, 'success')
-    setShowForm(false)
-
-    // Refresh list
-    const { data: refreshed } = await supabase
-      .from('products')
-      .select('*, categories(name), product_images(image_url, is_primary), product_variants(id, size, color_name, stock_qty)')
-      .order('created_at', { ascending: false })
-    setProducts(refreshed ?? [])
   }
 
   const deleteProduct = async (id: string) => {
     if (!confirm('Delete this product?')) return
-    const supabase = createClient()
-    await supabase.from('products').delete().eq('id', id)
-    setProducts((prev) => prev.filter((p) => p.id !== id))
-    addToast('Product deleted', 'success')
+    const res = await fetch(`/api/admin/products?id=${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setProducts((prev) => prev.filter((p) => p.id !== id))
+      addToast('Product deleted', 'success')
+    }
   }
 
   const filtered = products.filter((p) =>

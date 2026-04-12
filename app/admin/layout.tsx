@@ -8,7 +8,7 @@ import {
   Settings, Bot, LogOut, Menu, X
 } from 'lucide-react'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+// layout uses fetch for sign out — no direct Supabase client needed for data
 
 const NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -34,8 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // No client-side auth check needed here.
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch('/api/auth/logout', { method: 'POST' })
     window.location.href = '/'
   }
 

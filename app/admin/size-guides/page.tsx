@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 
 interface MeasurementRow {
@@ -31,9 +30,9 @@ export default function AdminSizeGuidesPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { data } = await supabase.from('size_guides').select('*, categories(name)').order('name')
-      setGuides(data ?? [])
+      const res = await fetch('/api/admin/size-guides')
+      const data = await res.json()
+      setGuides(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('[SizeGuides] load threw:', err)
     } finally {
@@ -69,31 +68,45 @@ export default function AdminSizeGuidesPage() {
   const handleSave = async () => {
     if (!form.name) { addToast('Name is required', 'error'); return }
     setSaving(true)
-    const supabase = createClient()
     const data = {
       name: form.name,
       category_id: form.category_id || null,
       unit: form.unit,
       measurements: { rows, columns: ['size', 'chest', 'waist', 'hips', 'length'] },
     }
-    if (editing) {
-      await supabase.from('size_guides').update(data).eq('id', editing.id)
-      addToast('Size guide updated', 'success')
-    } else {
-      await supabase.from('size_guides').insert(data)
-      addToast('Size guide created', 'success')
+
+    try {
+      if (editing) {
+        await fetch('/api/admin/size-guides', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editing.id, ...data }),
+        })
+        addToast('Size guide updated', 'success')
+      } else {
+        await fetch('/api/admin/size-guides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        addToast('Size guide created', 'success')
+      }
+      setShowForm(false)
+      load()
+    } catch (err) {
+      addToast('Save failed', 'error')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    setShowForm(false)
-    load()
   }
 
   const deleteGuide = async (id: string) => {
     if (!confirm('Delete this size guide?')) return
-    const supabase = createClient()
-    await supabase.from('size_guides').delete().eq('id', id)
-    setGuides((prev) => prev.filter((g) => g.id !== id))
-    addToast('Deleted', 'success')
+    const res = await fetch(`/api/admin/size-guides?id=${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setGuides((prev) => prev.filter((g) => g.id !== id))
+      addToast('Deleted', 'success')
+    }
   }
 
   return (
