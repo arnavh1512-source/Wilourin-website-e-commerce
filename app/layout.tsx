@@ -8,6 +8,7 @@ import { CookieBanner } from '@/components/ui/CookieBanner'
 import { CartDrawer } from '@/components/drawers/CartDrawer'
 import { HelpDrawer } from '@/components/drawers/HelpDrawer'
 import { AIAdvisorDrawer } from '@/components/drawers/AIAdvisorDrawer'
+import { GlitchIntro } from '@/components/GlitchIntro'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className="bg-white text-[#0A0A0A] antialiased">
         <Providers>
+          <GlitchIntro />
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <Footer />
