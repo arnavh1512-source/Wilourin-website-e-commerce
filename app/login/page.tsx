@@ -3,21 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-
-const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-})
-type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
   const sp = useSearchParams()
   const redirect = sp.get('redirect') ?? '/account'
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -25,28 +19,21 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
-
-  const onSubmit = async (data: FormData) => {
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
     setErrorMsg(null)
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      })
-      if (error) {
-        setErrorMsg(error.message)
-        return
-      }
-      // Hard redirect so the browser picks up the new session cookie cleanly
-      window.location.href = redirect
-    } catch (err: any) {
-      setErrorMsg(err?.message ?? 'An unexpected error occurred')
-    } finally {
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setErrorMsg(error.message)
       setLoading(false)
+      return
     }
+
+    window.location.href = redirect
   }
 
   const handleGoogle = async () => {
@@ -107,30 +94,32 @@ export default function LoginPage() {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-4">
             <div>
               <label className="text-xs uppercase tracking-widest text-gray-500 block mb-1.5">Email</label>
               <input
-                {...register('email')}
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400 transition-colors"
                 placeholder="your@email.com"
               />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
             </div>
             <div>
               <label className="text-xs uppercase tracking-widest text-gray-500 block mb-1.5">Password</label>
               <div className="relative">
                 <input
-                  {...register('password')}
                   type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400 transition-colors pr-10"
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
             </div>
 
             <button type="button" onClick={() => setForgotMode(true)} className="text-xs text-gray-400 underline float-right -mt-2">
