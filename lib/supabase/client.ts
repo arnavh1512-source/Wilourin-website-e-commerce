@@ -2,9 +2,6 @@ import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/types'
 
 // ── Web Lock bypass ────────────────────────────────────────────────────────────
-// Supabase auth-js serialises every auth operation behind a navigator.locks
-// named lock. In a Next.js app several callers (onAuthStateChange, signIn,
-// getSession triggered by DB queries) race for the same lock and deadlock.
 if (typeof window !== 'undefined' && window.navigator?.locks) {
   ;(window.navigator.locks as any).request = async (
     _name: string,
@@ -16,6 +13,31 @@ if (typeof window !== 'undefined' && window.navigator?.locks) {
   }
 }
 
+// ── Global fetch proxy (browser only) ─────────────────────────────────────────
+// @supabase/ssr's createBrowserClient does NOT route auth calls through
+// global.fetch — auth-js uses its own internal fetch reference.
+// Patching window.fetch globally is the only reliable way to intercept every
+// Supabase request (auth + db + storage) and redirect them through the Vercel
+// rewrite proxy so the browser never dials the IPv6-only Supabase endpoint.
+if (typeof window !== 'undefined') {
+  const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const _native = window.fetch.bind(window)
+  ;(window as any).fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = input instanceof Request ? input.url : input.toString()
+    if (url.startsWith(SUPABASE_ORIGIN)) {
+      const proxied = url.replace(
+        SUPABASE_ORIGIN,
+        `${window.location.origin}/supabase-proxy`
+      )
+      return _native(
+        input instanceof Request ? new Request(proxied, input) : proxied,
+        init
+      )
+    }
+    return _native(input, init)
+  }
+}
+
 const noOpLock = async (
   _name: string,
   _acquireTimeout: number,
@@ -23,30 +45,9 @@ const noOpLock = async (
 ) => fn()
 
 export function createClient() {
-  const isClient = typeof window !== 'undefined'
-
-  // ── Proxy fetch (browser only) ──────────────────────────────────────────────
-  // We MUST keep the real Supabase URL as supabaseUrl so the storage key
-  // (sb-rznljjxrgpssuzwqiemv-auth-token) matches what the server-side client
-  // reads from cookies. But we rewrite every outgoing fetch to go through the
-  // Vercel rewrite proxy so the browser never dials Supabase directly
-  // (avoids IPv6-only endpoints that some ISPs can't reach).
-  const proxyFetch: typeof fetch | undefined = isClient
-    ? async (input: RequestInfo | URL, init?: RequestInit) => {
-        const original = process.env.NEXT_PUBLIC_SUPABASE_URL!
-        const proxied = input
-          .toString()
-          .replace(original, `${window.location.origin}/supabase-proxy`)
-        return fetch(proxied, init)
-      }
-    : undefined
-
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: { lock: noOpLock },
-      global: { fetch: proxyFetch },
-    }
+    { auth: { lock: noOpLock } }
   )
 }
