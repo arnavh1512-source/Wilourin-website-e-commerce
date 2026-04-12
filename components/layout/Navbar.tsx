@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShoppingBag, Heart, User, Search, Menu, X, Crown } from 'lucide-react'
-import { useCartStore, useUIStore, useUserStore, useWishlistStore } from '@/lib/store'
-import { createClient } from '@/lib/supabase/client'
+import { useCartStore, useUIStore, useWishlistStore } from '@/lib/store'
 import { AnnouncementBar } from './AnnouncementBar'
 import { cn } from '@/lib/utils'
 
@@ -30,9 +29,10 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const { toggleCart: uiToggleCart, toggleSearch } = useUIStore()
-  const { profile, isAdmin } = useUserStore()
   const wishlistCount = useWishlistStore((s) => s.items.length)
   const cartCount = useCartStore((s) => s.getItemCount())
+  const [profile, setProfile] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
@@ -41,12 +41,21 @@ export function Navbar() {
   }, [])
 
   useEffect(() => {
-    createClient()
-      .from('homepage_settings')
-      .select('announcement_text')
-      .eq('id', 1)
-      .single()
-      .then(({ data }) => setAnnouncement(data?.announcement_text ?? null))
+    fetch('/api/store/homepage')
+      .then((r) => r.json())
+      .then((data) => setAnnouncement(data?.settings?.announcement_text ?? null))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/account/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return
+        setProfile(data.profile)
+        setIsAdmin(data.isAdmin ?? false)
+      })
+      .catch(() => {})
   }, [])
 
   const isAdminRoute = pathname.startsWith('/admin')

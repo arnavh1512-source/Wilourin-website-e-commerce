@@ -6,8 +6,11 @@ export async function GET() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  return NextResponse.json({ user, profile: profile ?? null })
+  const [{ data: profile }, { data: adminRow }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('admin_users').select('user_id').eq('user_id', user.id).single(),
+  ])
+  return NextResponse.json({ user, profile: profile ?? null, isAdmin: !!adminRow })
 }
 
 export async function PATCH(request: Request) {
