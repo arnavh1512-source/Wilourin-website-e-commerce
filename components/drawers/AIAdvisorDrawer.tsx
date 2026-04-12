@@ -63,7 +63,10 @@ export function AIAdvisorDrawer() {
         body: JSON.stringify({ messages: apiMessages }),
       })
 
-      if (!res.ok || !res.body) throw new Error('Failed')
+      if (!res.ok || !res.body) {
+        const errJson = await res.json().catch(() => ({}))
+        throw new Error(errJson.error ?? `HTTP ${res.status}`)
+      }
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -79,10 +82,10 @@ export function AIAdvisorDrawer() {
           return next
         })
       }
-    } catch {
+    } catch (err) {
       setMessages((prev) => {
         const next = [...prev]
-        next[next.length - 1] = { role: 'assistant', content: 'Sorry, I had trouble connecting. Please try again!' }
+        next[next.length - 1] = { role: 'assistant', content: `Error: ${String(err)}` }
         return next
       })
     } finally {

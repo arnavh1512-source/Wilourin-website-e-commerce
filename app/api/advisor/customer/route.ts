@@ -91,7 +91,8 @@ Guidelines:
         'Transfer-Encoding': 'chunked',
       },
     })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (err) {
+    console.error('[advisor/customer]', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
