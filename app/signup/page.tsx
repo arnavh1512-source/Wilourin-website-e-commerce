@@ -31,20 +31,17 @@ export default function SignupPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: { full_name: data.fullName },
-        },
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email, password: data.password, fullName: data.fullName }),
       })
-      if (error) { addToast(error.message, 'error'); return }
+      const json = await res.json()
+      if (!res.ok) { addToast(json.error ?? 'Sign up failed', 'error'); return }
       addToast('Account created! Welcome to Wilourin.', 'success')
-      // Hard redirect so middleware picks up the new session cookie cleanly
       window.location.href = '/account'
-    } catch (err: any) {
-      addToast(err?.message ?? 'An unexpected error occurred', 'error')
+    } catch {
+      addToast('Failed to connect. Please try again.', 'error')
     } finally {
       setLoading(false)
     }
