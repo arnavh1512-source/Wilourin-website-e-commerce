@@ -39,7 +39,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
-    const { messages } = parsed.data
+
+    // Anthropic requires messages to start with a user turn
+    const firstUserIdx = parsed.data.messages.findIndex((m) => m.role === 'user')
+    if (firstUserIdx === -1) return NextResponse.json({ error: 'No user message' }, { status: 400 })
+    const messages = parsed.data.messages.slice(firstUserIdx)
 
     // ── Gather real store insights (service role — sees everything) ──
     const now = new Date()

@@ -42,10 +42,11 @@ export default function AdminAdvisorPage() {
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
     try {
+      // Skip the initial greeting bubble — Anthropic requires first message to be 'user'
       const res = await fetch('/api/advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages.slice(1) }),
       })
 
       if (!res.ok) {
