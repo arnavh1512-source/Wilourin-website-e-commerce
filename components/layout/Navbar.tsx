@@ -7,6 +7,7 @@ import { ShoppingBag, Heart, User, Search, Menu, X, Crown } from 'lucide-react'
 import { useCartStore, useUIStore, useWishlistStore } from '@/lib/store'
 import { AnnouncementBar } from './AnnouncementBar'
 import { cn } from '@/lib/utils'
+import { detectCityByIP, getStoredCity, setStoredCity } from '@/lib/location'
 
 const NAV_LINKS = [
   { label: 'Men', href: '/products?category=men' },
@@ -33,6 +34,7 @@ export function Navbar() {
   const cartCount = useCartStore((s) => s.getItemCount())
   const [profile, setProfile] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [detectedCity, setDetectedCity] = useState<string>('')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
@@ -44,6 +46,17 @@ export function Navbar() {
     fetch('/api/store/homepage')
       .then((r) => r.json())
       .then((data) => setAnnouncement(data?.settings?.announcement_text ?? null))
+      .catch(() => {})
+  }, [])
+
+  // Silent city detection — IP-based, never blocks, falls back gracefully
+  useEffect(() => {
+    const stored = getStoredCity()
+    if (stored) { setDetectedCity(stored); return }
+    detectCityByIP()
+      .then((city) => {
+        if (city) { setStoredCity(city); setDetectedCity(city) }
+      })
       .catch(() => {})
   }, [])
 
@@ -63,7 +76,7 @@ export function Navbar() {
 
   return (
     <>
-      <AnnouncementBar text={announcement} />
+      <AnnouncementBar text={announcement ?? (detectedCity ? `Delivering to ${detectedCity}` : null)} />
       <header
         className={cn(
           'sticky top-0 z-50 w-full transition-all duration-300',

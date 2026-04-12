@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Lock, ChevronRight, Tag, Coins, Truck } from 'lucide-react'
+import { Lock, ChevronRight, Coins, Truck, LocateFixed } from 'lucide-react'
 import { useCartStore, useUserStore, useToastStore } from '@/lib/store'
 import { formatPrice, INDIAN_STATES } from '@/lib/utils'
+import { detectLocationByGPS, getDeliveryEstimate, getStoredCity, setStoredCity } from '@/lib/location'
 import type { Address } from '@/lib/types'
 
 const addressSchema = z.object({
@@ -49,8 +50,34 @@ export default function CheckoutPage() {
   const [redeemPoints, setRedeemPoints] = useState(false)
   const [paying, setPaying] = useState(false)
   const [storeSettings, setStoreSettings] = useState({ freeThreshold: 999, standardCost: 99, expressCost: 199, standardDays: '5–7', expressDays: '2–3', pointsPerRupee: 1 })
+  const [detectedCity, setDetectedCity] = useState<string>('')
+  const [locating, setLocating] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<AddressForm>({
+  const handleUseMyLocation = async () => {
+    setLocating(true)
+    try {
+      const result = await detectLocationByGPS()
+      // Match state to INDIAN_STATES list (case-insensitive)
+      const matchedState = INDIAN_STATES.find(
+        (s) => s.toLowerCase() === result.state.toLowerCase()
+      ) ?? result.state
+      setValue('city', result.city)
+      setValue('state', matchedState)
+      if (result.pincode) setValue('pincode', result.pincode)
+      setDetectedCity(result.city)
+      setStoredCity(result.city)
+      addToast(`Location detected — ${result.city}, ${matchedState}`, 'success')
+    } catch (err: unknown) {
+      const msg = err instanceof GeolocationPositionError && err.code === 1
+        ? 'Location access denied — please fill manually'
+        : 'Could not detect location — please fill manually'
+      addToast(msg, 'error')
+    } finally {
+      setLocating(false)
+    }
+  }
+
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<AddressForm>({
     resolver: zodResolver(addressSchema),
   })
 
@@ -63,6 +90,10 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (items.length === 0) { router.replace('/'); return }
+
+    // Seed city from localStorage
+    const stored = getStoredCity()
+    if (stored) setDetectedCity(stored)
 
     // Load store settings
     fetch('/api/store/settings').then((r) => r.json()).then((data) => {
@@ -209,6 +240,17 @@ export default function CheckoutPage() {
             {/* New address form */}
             {(useNewAddress || savedAddresses.length === 0) && (
               <form className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleUseMyLocation}
+                    disabled={locating}
+                    className="flex items-center gap-1.5 text-xs border border-gray-300 px-3 py-1.5 rounded hover:border-gray-500 transition-colors disabled:opacity-50"
+                  >
+                    <LocateFixed size={13} />
+                    {locating ? 'Detecting…' : 'Use My Location'}
+                  </button>
+                </div>
                 {!profile && (
                   <div className="sm:col-span-2">
                     <label className="text-xs uppercase tracking-widest text-gray-500 block mb-1">Email *</label>
@@ -258,11 +300,20 @@ export default function CheckoutPage() {
           {/* Step 1 — Shipping */}
           <section>
             <h2 className="font-serif text-2xl mb-5">Shipping Method</h2>
+            {detectedCity && (
+              <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                <LocateFixed size={11} />
+                Delivering to <span className="font-medium text-gray-700">{detectedCity}</span>
+              </p>
+            )}
             <div className="space-y-3">
-              {[
-                { method: 'Standard' as const, label: `Standard — ${storeSettings.standardDays} days`, cost: freeShipping ? 'Free' : formatPrice(storeSettings.standardCost) },
-                { method: 'Express' as const, label: `Express — ${storeSettings.expressDays} days`, cost: freeShipping ? 'Free' : formatPrice(storeSettings.expressCost) },
-              ].map(({ method, label, cost }) => (
+              {(() => {
+                const est = detectedCity ? getDeliveryEstimate(detectedCity) : null
+                return [
+                  { method: 'Standard' as const, label: `Standard — ${est ? est.standard : storeSettings.standardDays}`, cost: freeShipping ? 'Free' : formatPrice(storeSettings.standardCost) },
+                  { method: 'Express' as const, label: `Express — ${est ? est.express : storeSettings.expressDays}`, cost: freeShipping ? 'Free' : formatPrice(storeSettings.expressCost) },
+                ]
+              })().map(({ method, label, cost }) => (
                 <label key={method} className={`flex items-center justify-between border p-4 cursor-pointer rounded transition-colors ${shippingMethod === method ? 'border-[#0A0A0A]' : 'border-gray-200'}`}>
                   <div className="flex items-center gap-3">
                     <input type="radio" checked={shippingMethod === method} onChange={() => setShippingMethod(method)} />
