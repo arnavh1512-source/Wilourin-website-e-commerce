@@ -12,9 +12,9 @@ import {
   Upload, Copy, Check, Crown, Share2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useUserStore, useToastStore } from '@/lib/store'
+import { useToastStore } from '@/lib/store'
 import { getLoyaltyTier, formatPrice, formatDate, getInitials } from '@/lib/utils'
-import type { Profile, Order, OrderWithItems, Address } from '@/lib/types'
+import type { Profile, OrderWithItems, Address } from '@/lib/types'
 
 type Tab = 'profile' | 'orders' | 'wishlist' | 'addresses' | 'loyalty'
 
@@ -37,26 +37,29 @@ const addressSchema = z.object({
 type AddressForm = z.infer<typeof addressSchema>
 
 export default function AccountPage() {
-  const { profile, setProfile } = useUserStore()
   const addToast = useToastStore((s) => s.addToast)
   const [tab, setTab] = useState<Tab>('profile')
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    // onAuthStateChange is passive — reads session from cookie without acquiring Web Lock
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) { window.location.href = '/login?redirect=/account'; return }
-      setUser(session.user)
-      setLoading(false)
-    })
-    return () => subscription.unsubscribe()
+    fetch('/api/account/me')
+      .then((r) => {
+        if (r.status === 401) { window.location.href = '/login?redirect=/account'; return null }
+        return r.json()
+      })
+      .then((data) => {
+        if (!data) return
+        setUser(data.user)
+        setProfile(data.profile)
+        setLoading(false)
+      })
+      .catch(() => { window.location.href = '/login?redirect=/account' })
   }, [])
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch('/api/auth/logout', { method: 'POST' })
     window.location.href = '/'
   }
 
@@ -84,7 +87,6 @@ export default function AccountPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar */}
         <aside className="md:w-52 shrink-0">
           <nav className="flex md:flex-col gap-1">
             {tabs.map((t) => (
@@ -98,13 +100,12 @@ export default function AccountPage() {
           </nav>
         </aside>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           {tab === 'profile' && <ProfileTab user={user} profile={profile} setProfile={setProfile} addToast={addToast} />}
-          {tab === 'orders' && <OrdersTab userId={user.id} />}
-          {tab === 'wishlist' && <WishlistTab userId={user.id} />}
-          {tab === 'addresses' && <AddressesTab userId={user.id} addToast={addToast} />}
-          {tab === 'loyalty' && <LoyaltyTab userId={user.id} profile={profile} addToast={addToast} />}
+          {tab === 'orders' && <OrdersTab />}
+          {tab === 'wishlist' && <WishlistTab />}
+          {tab === 'addresses' && <AddressesTab addToast={addToast} />}
+          {tab === 'loyalty' && <LoyaltyTab profile={profile} addToast={addToast} />}
         </div>
       </div>
     </div>
@@ -132,15 +133,17 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
   const onSave = async (data: ProfileForm) => {
     setSaving(true)
     try {
-      const supabase = createClient()
-      const { data: updated, error } = await supabase
-        .from('profiles').update({ full_name: data.full_name, phone: data.phone || null } as any)
-        .eq('id', user.id).select().single()
-      if (error) { addToast(error.message, 'error'); return }
-      setProfile(updated as Profile)
+      const res = await fetch('/api/account/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: data.full_name, phone: data.phone || null }),
+      })
+      const json = await res.json()
+      if (!res.ok) { addToast(json.error ?? 'Failed to update', 'error'); return }
+      setProfile(json as Profile)
       addToast('Profile updated!', 'success')
-    } catch (err: any) {
-      addToast(err?.message ?? 'Failed to update profile', 'error')
+    } catch {
+      addToast('Failed to update profile', 'error')
     } finally {
       setSaving(false)
     }
@@ -157,12 +160,17 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
       const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
       if (upErr) { addToast('Upload failed', 'error'); return }
       const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
-      const { data: updated, error } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id).select().single()
-      if (error) { addToast(error.message, 'error'); return }
-      setProfile(updated as Profile)
+      const res = await fetch('/api/account/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar_url: publicUrl }),
+      })
+      const json = await res.json()
+      if (!res.ok) { addToast(json.error ?? 'Failed to update', 'error'); return }
+      setProfile(json as Profile)
       addToast('Avatar updated!', 'success')
-    } catch (err: any) {
-      addToast(err?.message ?? 'Upload failed', 'error')
+    } catch {
+      addToast('Upload failed', 'error')
     } finally {
       setUploading(false)
     }
@@ -172,7 +180,6 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
     <div className="space-y-8">
       <div>
         <h2 className="font-serif text-2xl mb-6">Profile</h2>
-        {/* Avatar */}
         <div className="flex items-center gap-5 mb-6">
           <div className="relative">
             {profile?.avatar_url ? (
@@ -220,19 +227,17 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
 
 // ── Orders Tab ───────────────────────────────────────────────────────────────
 
-function OrdersTab({ userId }: { userId: string }) {
+function OrdersTab() {
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('orders')
-      .select('*, order_items(*)')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { setOrders((data as OrderWithItems[]) ?? []); setLoading(false) })
-  }, [userId])
+    fetch('/api/account/orders')
+      .then((r) => r.json())
+      .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
   const statusColor: Record<string, string> = {
     Confirmed: 'bg-blue-50 text-blue-700',
@@ -312,22 +317,23 @@ function OrdersTab({ userId }: { userId: string }) {
 
 // ── Wishlist Tab ─────────────────────────────────────────────────────────────
 
-function WishlistTab({ userId }: { userId: string }) {
+function WishlistTab() {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('wishlist')
-      .select('*, products(id, name, slug, original_price, price, product_images(image_url, is_primary))')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { setItems(data ?? []); setLoading(false) })
-  }, [userId])
+    fetch('/api/account/wishlist')
+      .then((r) => r.json())
+      .then((data) => { setItems(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
   const remove = async (id: string) => {
-    const supabase = createClient()
-    await supabase.from('wishlist').delete().eq('id', id)
+    await fetch('/api/account/wishlist', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
     setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
@@ -371,7 +377,7 @@ function WishlistTab({ userId }: { userId: string }) {
 
 // ── Addresses Tab ────────────────────────────────────────────────────────────
 
-function AddressesTab({ userId, addToast }: { userId: string; addToast: (m: string, t: any) => void }) {
+function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
   const [addresses, setAddresses] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -380,10 +386,11 @@ function AddressesTab({ userId, addToast }: { userId: string; addToast: (m: stri
   const { register, handleSubmit, formState: { errors }, reset } = useForm<AddressForm>({ resolver: zodResolver(addressSchema) })
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('addresses').select('*').eq('user_id', userId).order('is_default', { ascending: false })
-      .then(({ data }) => { setAddresses((data as Address[]) ?? []); setLoading(false) })
-  }, [userId])
+    fetch('/api/account/addresses')
+      .then((r) => r.json())
+      .then((data) => { setAddresses(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
   const openAdd = () => { setEditing(null); reset({}); setShowForm(true) }
   const openEdit = (a: Address) => {
@@ -393,32 +400,46 @@ function AddressesTab({ userId, addToast }: { userId: string; addToast: (m: stri
   }
 
   const onSave = async (data: AddressForm) => {
-    const supabase = createClient()
     if (editing) {
-      const { data: updated, error } = await supabase.from('addresses').update(data).eq('id', editing.id).select().single()
-      if (error) { addToast(error.message, 'error'); return }
-      setAddresses((prev) => prev.map((a) => a.id === editing.id ? updated as Address : a))
+      const res = await fetch('/api/account/addresses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editing.id, ...data }),
+      })
+      const json = await res.json()
+      if (!res.ok) { addToast(json.error ?? 'Failed', 'error'); return }
+      setAddresses((prev) => prev.map((a) => a.id === editing.id ? json as Address : a))
       addToast('Address updated', 'success')
     } else {
-      const { data: created, error } = await supabase.from('addresses').insert({ ...data, user_id: userId }).select().single()
-      if (error) { addToast(error.message, 'error'); return }
-      setAddresses((prev) => [...prev, created as Address])
+      const res = await fetch('/api/account/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) { addToast(json.error ?? 'Failed', 'error'); return }
+      setAddresses((prev) => [...prev, json as Address])
       addToast('Address added', 'success')
     }
     setShowForm(false)
   }
 
   const deleteAddr = async (id: string) => {
-    const supabase = createClient()
-    await supabase.from('addresses').delete().eq('id', id)
+    await fetch('/api/account/addresses', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
     setAddresses((prev) => prev.filter((a) => a.id !== id))
     addToast('Address deleted', 'success')
   }
 
   const setDefault = async (id: string) => {
-    const supabase = createClient()
-    await supabase.from('addresses').update({ is_default: false }).eq('user_id', userId)
-    await supabase.from('addresses').update({ is_default: true }).eq('id', id)
+    await fetch('/api/account/addresses', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
     setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })))
     addToast('Default address updated', 'success')
   }
@@ -519,7 +540,7 @@ function AddressesTab({ userId, addToast }: { userId: string; addToast: (m: stri
 
 // ── Loyalty Tab ──────────────────────────────────────────────────────────────
 
-function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Profile | null; addToast: (m: string, t: any) => void }) {
+function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: (m: string, t: any) => void }) {
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -536,11 +557,11 @@ function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Pr
   }
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('loyalty_transactions').select('*').eq('user_id', userId)
-      .order('created_at', { ascending: false }).limit(20)
-      .then(({ data }) => { setTransactions(data ?? []); setLoading(false) })
-  }, [userId])
+    fetch('/api/account/loyalty')
+      .then((r) => r.json())
+      .then((data) => { setTransactions(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
   const copyCode = () => {
     if (!profile?.referral_code) return
@@ -560,7 +581,6 @@ function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Pr
       <div>
         <h2 className="font-serif text-2xl mb-6">Rewards & Loyalty</h2>
 
-        {/* Tier card */}
         <div className="bg-[#0A0A0A] text-white p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -588,7 +608,6 @@ function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Pr
           )}
         </div>
 
-        {/* Referral */}
         {profile?.referral_code && (
           <div className="border border-gray-100 p-5 mb-6">
             <p className="text-sm font-medium mb-1">Your Referral Code</p>
@@ -605,7 +624,6 @@ function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Pr
           </div>
         )}
 
-        {/* How to earn */}
         <div className="border border-gray-100 p-5 mb-6">
           <p className="text-sm font-medium mb-3">How to Earn Points</p>
           <div className="space-y-2 text-sm text-gray-500">
@@ -617,7 +635,6 @@ function LoyaltyTab({ userId, profile, addToast }: { userId: string; profile: Pr
           </div>
         </div>
 
-        {/* Transaction history */}
         <div>
           <p className="text-sm font-medium mb-3">Points History</p>
           {loading ? (
