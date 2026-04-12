@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const redirect = searchParams.get('redirect') ?? '/account'
 
   if (code) {
-    const supabase = createClient()
+    const supabase = await createClient()
     await supabase.auth.exchangeCodeForSession(code)
   }
 

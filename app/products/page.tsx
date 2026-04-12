@@ -24,7 +24,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   const maxPrice = typeof sp.max === 'string' ? Number(sp.max) : undefined
   const sort = typeof sp.sort === 'string' ? sp.sort : 'newest'
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Fetch categories for filter sidebar
   const { data: categories } = await supabase

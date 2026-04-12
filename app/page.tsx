@@ -10,49 +10,54 @@ import { TrustBadges } from '@/components/sections/TrustBadges'
 export const revalidate = 30
 
 export default async function HomePage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
-  // Fetch all homepage data in parallel
-  const [
-    { data: settings },
-    { data: rawCategories },
-    { data: lookbook },
-  ] = await Promise.all([
-    supabase.from('homepage_settings').select('*').eq('id', 1).single(),
-    supabase.from('categories').select('*').eq('is_active', true).is('parent_id', null).order('display_order'),
-    supabase.from('lookbook_submissions').select('*').eq('status', 'Approved').order('created_at', { ascending: false }).limit(12),
-  ])
-
-  // Fetch featured products
-  const featuredIds = settings?.featured_product_ids ?? []
+  let settings: Record<string, unknown> | null = null
+  let rawCategories: unknown[] | null = null
+  let lookbook: unknown[] | null = null
   let featuredProducts: Array<{ id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null; images: Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }> }> = []
 
-  if (featuredIds.length > 0) {
-    const { data } = await supabase
-      .from('products')
-      .select('id, name, slug, price, original_price, badge, product_images(id, image_url, is_primary, display_order)')
-      .eq('status', 'Published')
-      .in('id', featuredIds)
-      .limit(8)
-    featuredProducts = (data ?? []).map((p: Record<string, unknown>) => ({
-      ...(p as { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null }),
-      images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
-    }))
-  }
+  try {
+    const [settingsRes, categoriesRes, lookbookRes] = await Promise.all([
+      supabase.from('homepage_settings').select('*').eq('id', 1).single(),
+      supabase.from('categories').select('*').eq('is_active', true).is('parent_id', null).order('display_order'),
+      supabase.from('lookbook_submissions').select('*').eq('status', 'Approved').order('created_at', { ascending: false }).limit(12),
+    ])
+    settings = settingsRes.data
+    rawCategories = categoriesRes.data
+    lookbook = lookbookRes.data
+  } catch {}
 
-  // Fallback: fetch 8 featured/published products if none pinned
-  if (featuredProducts.length === 0) {
-    const { data } = await supabase
-      .from('products')
-      .select('id, name, slug, price, original_price, badge, is_featured, product_images(id, image_url, is_primary, display_order)')
-      .eq('status', 'Published')
-      .eq('is_featured', true)
-      .limit(8)
-    featuredProducts = (data ?? []).map((p: Record<string, unknown>) => ({
-      ...(p as { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null }),
-      images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
-    }))
-  }
+  // Fetch featured products
+  const featuredIds = (settings?.featured_product_ids as string[]) ?? []
+
+  try {
+    if (featuredIds.length > 0) {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, slug, price, original_price, badge, product_images(id, image_url, is_primary, display_order)')
+        .eq('status', 'Published')
+        .in('id', featuredIds)
+        .limit(8)
+      featuredProducts = (data ?? []).map((p: Record<string, unknown>) => ({
+        ...(p as { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null }),
+        images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
+      }))
+    }
+
+    if (featuredProducts.length === 0) {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, slug, price, original_price, badge, is_featured, product_images(id, image_url, is_primary, display_order)')
+        .eq('status', 'Published')
+        .eq('is_featured', true)
+        .limit(8)
+      featuredProducts = (data ?? []).map((p: Record<string, unknown>) => ({
+        ...(p as { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null }),
+        images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
+      }))
+    }
+  } catch {}
 
   return (
     <>

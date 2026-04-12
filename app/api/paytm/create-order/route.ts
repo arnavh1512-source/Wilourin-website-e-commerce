@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createAdminClient()
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     // ── Server-side price validation ─────────────────────

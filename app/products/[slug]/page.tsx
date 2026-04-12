@@ -8,7 +8,7 @@ export const revalidate = 60
 interface Props { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data } = await supabase.from('products').select('name, meta_title, meta_description').eq('slug', params.slug).single()
   return {
     title: data?.meta_title ?? data?.name,
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: product } = await supabase
     .from('products')

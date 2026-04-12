@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     if (!code) return NextResponse.json({ valid: false, message: 'No code provided' })
 
     const admin = createAdminClient()
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data: discount } = await admin
       .from('discount_codes')
