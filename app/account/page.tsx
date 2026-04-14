@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   User, Package, Heart, MapPin, Star, LogOut,
   ChevronDown, ChevronUp, Plus, Pencil, Trash2,
-  Upload, Copy, Check, Crown, Share2
+  Upload, Crown
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
@@ -543,7 +543,6 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
 function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: (m: string, t: any) => void }) {
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
 
   const points = profile?.loyalty_points ?? 0
   const tier = getLoyaltyTier(points)
@@ -562,19 +561,6 @@ function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: 
       .then((data) => { setTransactions(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
-
-  const copyCode = () => {
-    if (!profile?.referral_code) return
-    navigator.clipboard.writeText(profile.referral_code)
-    setCopied(true)
-    addToast('Referral code copied!', 'success')
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const shareWhatsApp = () => {
-    const msg = `Hey! Check out Wilourin — premium Indian streetwear. Use my code ${profile?.referral_code} for a discount. Shop here: ${window.location.origin}/products`
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
-  }
 
   return (
     <div className="space-y-8">
@@ -607,22 +593,6 @@ function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: 
             </div>
           )}
         </div>
-
-        {profile?.referral_code && (
-          <div className="border border-gray-100 p-5 mb-6">
-            <p className="text-sm font-medium mb-1">Your Referral Code</p>
-            <p className="text-xs text-gray-400 mb-3">Share with friends and earn bonus points when they order</p>
-            <div className="flex items-center gap-3">
-              <code className="flex-1 bg-gray-50 border border-gray-200 px-4 py-2.5 text-sm font-mono tracking-wider">{profile.referral_code}</code>
-              <button onClick={copyCode} className="p-2.5 border border-gray-200 hover:bg-gray-50 transition-colors">
-                {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-gray-500" />}
-              </button>
-              <button onClick={shareWhatsApp} className="p-2.5 border border-gray-200 hover:bg-gray-50 transition-colors">
-                <Share2 size={16} className="text-gray-500" />
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="border border-gray-100 p-5 mb-6">
           <p className="text-sm font-medium mb-3">How to Earn Points</p>

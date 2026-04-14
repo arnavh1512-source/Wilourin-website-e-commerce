@@ -11,7 +11,7 @@ function createAdminClient() {
 }
 
 export async function POST(request: Request) {
-  const { email, password, fullName, referralCode } = await request.json()
+  const { email, password, fullName } = await request.json()
   const supabase = await createClient()
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -34,50 +34,8 @@ export async function POST(request: Request) {
   await admin.from('profiles').upsert({
     id: newUserId,
     full_name: fullName,
-    referral_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
     loyalty_points: 0,
   })
-
-  // Handle referral
-  if (referralCode) {
-    const code = String(referralCode).trim().toUpperCase()
-
-    const { data: referrer } = await admin
-      .from('profiles')
-      .select('id, loyalty_points')
-      .eq('referral_code', code)
-      .neq('id', newUserId)
-      .single()
-
-    if (referrer) {
-      const referrerId = referrer.id as string
-      const referrerCurrentPoints = (referrer.loyalty_points as number) ?? 0
-
-      await Promise.all([
-        // Tag new user as referred
-        admin.from('profiles').update({ referred_by: referrerId, loyalty_points: 50 }).eq('id', newUserId),
-
-        // Referrer gets 100 points
-        admin.from('profiles').update({ loyalty_points: referrerCurrentPoints + 100 }).eq('id', referrerId),
-
-        // Loyalty transaction for referrer
-        admin.from('loyalty_transactions').insert({
-          user_id: referrerId,
-          type: 'referral',
-          points: 100,
-          description: 'Referral bonus — friend joined Wilourin',
-        }),
-
-        // Loyalty transaction for new user
-        admin.from('loyalty_transactions').insert({
-          user_id: newUserId,
-          type: 'referral',
-          points: 50,
-          description: 'Welcome bonus — signed up via referral',
-        }),
-      ])
-    }
-  }
 
   return NextResponse.json({ success: true })
 }

@@ -14,7 +14,6 @@ const schema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-  referralCode: z.string().optional(),
 }).refine((d) => d.password === d.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -35,7 +34,7 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.email, password: data.password, fullName: data.fullName, referralCode: data.referralCode?.trim().toUpperCase() || undefined }),
+        body: JSON.stringify({ email: data.email, password: data.password, fullName: data.fullName }),
       })
       const json = await res.json()
       if (!res.ok) { addToast(json.error ?? 'Sign up failed', 'error'); return }
@@ -105,14 +104,6 @@ export default function SignupPage() {
               </button>
             </div>
             {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}
-          </div>
-
-          <div>
-            <label className="text-xs uppercase tracking-widest text-gray-500 block mb-1.5">Referral Code <span className="normal-case text-gray-400">(optional)</span></label>
-            <input {...register('referralCode')} type="text"
-              className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400 transition-colors uppercase tracking-widest"
-              placeholder="e.g. AB12CD34"
-              onChange={(e) => e.target.value = e.target.value.toUpperCase()} />
           </div>
 
           <p className="text-xs text-gray-400">
