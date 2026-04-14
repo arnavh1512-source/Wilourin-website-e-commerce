@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   else if (sort === 'price_desc') query = query.order('price', { ascending: false })
   else query = query.order('created_at', { ascending: false })
 
-  const { data: products, error } = await query.limit(48)
+  const { data: products, error } = await query.limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   let result = products ?? []
