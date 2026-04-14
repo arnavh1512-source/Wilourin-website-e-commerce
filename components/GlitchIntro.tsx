@@ -20,7 +20,7 @@ export function GlitchIntro() {
   // Effect 1: decide whether to show the intro
   useEffect(() => {
     if (window.location.pathname.startsWith('/admin')) return
-    if (sessionStorage.getItem('intro_seen')) return
+    if (localStorage.getItem('intro_seen')) return
     setPhase('visible')
   }, [])
 
@@ -64,7 +64,7 @@ export function GlitchIntro() {
     // Unmount + mark seen at 3s
     const doneTimer = setTimeout(() => {
       setPhase('idle')
-      sessionStorage.setItem('intro_seen', '1')
+      localStorage.setItem('intro_seen', '1')
     }, 3000)
 
     return () => {

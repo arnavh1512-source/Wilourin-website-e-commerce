@@ -25,6 +25,9 @@ export async function GET(request: Request) {
     if (cat) {
       const subCatIds = (categories ?? []).filter((c) => c.parent_id === cat.id).map((c) => c.id)
       categoryIds = [cat.id, ...subCatIds]
+    } else {
+      // Unknown category slug — return empty rather than all products
+      return NextResponse.json([])
     }
   }
 

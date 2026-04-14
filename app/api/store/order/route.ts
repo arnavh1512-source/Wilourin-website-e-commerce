@@ -1,21 +1,38 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-// Public route to look up a single order by order_number
-// Used by the checkout success page
+function createAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
 export async function GET(request: Request) {
-  const supabase = await createClient()
   const { searchParams } = new URL(request.url)
   const orderNumber = searchParams.get('order_number')
-
   if (!orderNumber) return NextResponse.json({ error: 'Missing order_number' }, { status: 400 })
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('orders')
     .select('*')
     .eq('order_number', orderNumber)
     .single()
 
   if (error || !data) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+
+  // If the order belongs to a registered user, require that user to be authenticated
+  if (data.user_id) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || user.id !== data.user_id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+  // Guest orders (user_id is null) remain accessible by order number
+
   return NextResponse.json(data)
 }
