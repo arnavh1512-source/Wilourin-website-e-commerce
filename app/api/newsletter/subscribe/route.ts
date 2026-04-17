@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
             <a href="${process.env.NEXT_PUBLIC_SITE_URL}/products" style="display:inline-block;background:#0A0A0A;color:#fff;text-decoration:none;padding:12px 32px;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:16px;">Shop Now</a>
           </div>
         `,
-      }).catch(() => {}) // ignore send errors
+      }).catch((e) => { console.error('[newsletter] email send failed:', e) })
     }
 
     return NextResponse.json({ success: true })

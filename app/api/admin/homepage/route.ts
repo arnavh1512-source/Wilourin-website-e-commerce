@@ -1,5 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const homepageSchema = z.object({
+  hero_title: z.string().max(500).optional(),
+  hero_subtitle: z.string().max(1000).optional(),
+  hero_cta_text: z.string().max(200).optional(),
+  hero_cta_link: z.string().max(500).optional(),
+  hero_image_url: z.string().max(1000).optional(),
+  featured_category_ids: z.array(z.string()).optional(),
+  featured_product_ids: z.array(z.string()).optional(),
+  announcement_text: z.string().max(500).optional(),
+  announcement_active: z.boolean().optional(),
+  marquee_text: z.string().max(500).optional(),
+  show_lookbook: z.boolean().optional(),
+})
 
 async function getAdminSupabase() {
   const supabase = await createClient()
@@ -28,7 +43,10 @@ export async function PATCH(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { error: dbError } = await supabase!.from('homepage_settings').upsert({ id: 1, ...body })
+  const parsed = homepageSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
+  const { error: dbError } = await supabase!.from('homepage_settings').upsert({ id: 1, ...parsed.data })
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

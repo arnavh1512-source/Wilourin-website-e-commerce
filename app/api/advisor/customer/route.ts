@@ -13,7 +13,7 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   // 20 requests per 15 minutes per IP
-  const { allowed, retryAfterMs } = checkRateLimit(getIP(req), 20, 15 * 60 * 1000)
+  const { allowed, retryAfterMs } = checkRateLimit(`adv-c:${getIP(req)}`, 20, 15 * 60 * 1000)
   if (!allowed) return tooManyRequests(retryAfterMs)
 
   try {
@@ -93,6 +93,6 @@ Guidelines:
     })
   } catch (err) {
     console.error('[advisor/customer]', err)
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

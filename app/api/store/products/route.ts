@@ -40,7 +40,10 @@ export async function GET(request: Request) {
   if (badge) query = query.eq('badge', badge)
   if (minPrice) query = query.gte('price', minPrice)
   if (maxPrice) query = query.lte('price', maxPrice)
-  if (search) query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,tags.cs.{${search}}`)
+  if (search) {
+    const safe = search.replace(/[{}'"\\%_]/g, '').slice(0, 100)
+    if (safe) query = query.or(`name.ilike.%${safe}%,description.ilike.%${safe}%,tags.cs.{${safe}}`)
+  }
 
   if (sort === 'price_asc') query = query.order('price', { ascending: true })
   else if (sort === 'price_desc') query = query.order('price', { ascending: false })

@@ -14,10 +14,22 @@ export function CartDrawer() {
 
   const [promoInput, setPromoInput] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
+  const [freeThreshold, setFreeThreshold] = useState(999)
+  const [shippingCost, setShippingCost] = useState(99)
+
+  useEffect(() => {
+    fetch('/api/store/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.free_shipping_threshold != null) setFreeThreshold(Number(d.free_shipping_threshold))
+        if (d.standard_shipping_cost != null) setShippingCost(Number(d.standard_shipping_cost))
+      })
+      .catch(() => {})
+  }, [])
 
   const subtotal = getSubtotal()
-  const shippingFree = subtotal >= 999
-  const shipping = shippingFree ? 0 : 99
+  const shippingFree = subtotal >= freeThreshold
+  const shipping = shippingFree ? 0 : shippingCost
   const total = subtotal - discountAmount + shipping
 
   const applyPromo = async () => {
@@ -93,7 +105,7 @@ export function CartDrawer() {
             {!shippingFree && (
               <div className="bg-gray-50 px-6 py-2.5 text-xs text-gray-600 flex items-center gap-2">
                 <Truck size={12} />
-                Add {formatPrice(999 - subtotal)} more for <strong>free shipping</strong>
+                Add {formatPrice(freeThreshold - subtotal)} more for <strong>free shipping</strong>
               </div>
             )}
 

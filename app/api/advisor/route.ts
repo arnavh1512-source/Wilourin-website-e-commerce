@@ -123,7 +123,7 @@ Keep responses focused and under 300 words unless the user asks for detail.`
       })
     } catch (aiErr) {
       console.error('[advisor] anthropic error:', aiErr)
-      return NextResponse.json({ error: `Anthropic: ${String(aiErr)}` }, { status: 500 })
+      return NextResponse.json({ error: 'AI service unavailable' }, { status: 500 })
     }
 
     try {
@@ -134,10 +134,10 @@ Keep responses focused and under 300 words unless the user asks for detail.`
       return NextResponse.json({ message: text })
     } catch (parseErr) {
       console.error('[advisor] parse error:', parseErr, JSON.stringify(response.content))
-      return NextResponse.json({ error: `Parse error: ${String(parseErr)}` }, { status: 500 })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   } catch (err) {
     console.error('[advisor] error:', err)
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
