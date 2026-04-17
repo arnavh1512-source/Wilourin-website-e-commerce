@@ -36,3 +36,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# MCP config (contains project-specific endpoints)
+.mcp.json
