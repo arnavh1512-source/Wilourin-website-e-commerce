@@ -11,7 +11,6 @@ import {
   ChevronDown, ChevronUp, Plus, Pencil, Trash2,
   Upload, Crown
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useToastStore } from '@/lib/store'
 import { getLoyaltyTier, formatPrice, formatDate, getInitials } from '@/lib/utils'
 import type { Profile, OrderWithItems, Address } from '@/lib/types'
@@ -154,20 +153,12 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
     if (!file) return
     setUploading(true)
     try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop()
-      const path = `avatars/${user.id}.${ext}`
-      const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
-      if (upErr) { addToast('Upload failed', 'error'); return }
-      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
-      const res = await fetch('/api/account/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar_url: publicUrl }),
-      })
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/account/avatar', { method: 'POST', body: form })
       const json = await res.json()
-      if (!res.ok) { addToast(json.error ?? 'Failed to update', 'error'); return }
-      setProfile(json as Profile)
+      if (!res.ok) { addToast(json.error ?? 'Upload failed', 'error'); return }
+      setProfile(json.profile as Profile)
       addToast('Avatar updated!', 'success')
     } catch {
       addToast('Upload failed', 'error')

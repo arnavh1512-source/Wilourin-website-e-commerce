@@ -33,9 +33,7 @@ export function slugify(text: string): string {
 
 export function generateOrderNumber(): string {
   const { randomBytes } = require('crypto') as typeof import('crypto')
-  const timestamp = Date.now().toString(36).toUpperCase()
-  const random = randomBytes(4).readUInt32BE(0).toString(36).slice(0, 4).toUpperCase()
-  return `WIL-${timestamp}-${random}`
+  return `WIL-${randomBytes(16).toString('hex').toUpperCase()}`
 }
 
 export function calculateDiscountedPrice(price: number, originalPrice: number | null): number {
