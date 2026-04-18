@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, X, Clock } from 'lucide-react'
 import { ProductCard } from '@/components/ui/ProductCard'
@@ -37,8 +37,7 @@ export default function SearchPage() {
     localStorage.setItem('wilourin-recent-searches', JSON.stringify(updated))
   }
 
-  const doSearch = useCallback(
-    debounce(async (q: string) => {
+  const doSearch = useMemo(() => debounce(async (q: string) => {
       if (!q.trim()) { setResults([]); return }
       setLoading(true)
       try {
@@ -52,9 +51,8 @@ export default function SearchPage() {
       } finally {
         setLoading(false)
       }
-    }, 300),
-    [recent]
-  )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, 300), [])
 
   useEffect(() => {
     if (query) doSearch(query)

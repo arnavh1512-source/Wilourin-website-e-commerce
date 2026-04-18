@@ -83,7 +83,7 @@ export default function AdminDiscountsPage() {
       }
       setShowForm(false)
       load()
-    } catch (err) {
+    } catch {
       addToast('Save failed', 'error')
     } finally {
       setSaving(false)

@@ -140,7 +140,7 @@ export default function AdminProductsPage() {
       addToast(`Product ${editing ? 'updated' : 'created'}!`, 'success')
       setShowForm(false)
       await loadData()
-    } catch (err) {
+    } catch {
       addToast('Save failed', 'error')
     } finally {
       setSaving(false)

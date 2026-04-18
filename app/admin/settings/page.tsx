@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 import { Upload } from 'lucide-react'
 import { useToastStore } from '@/lib/store'
 
@@ -90,7 +91,7 @@ export default function AdminSettingsPage() {
         <div>
           <label className="text-xs text-gray-500 block mb-2">Logo</label>
           <div className="flex items-center gap-3">
-            {settings.logo_url && <img src={settings.logo_url} alt="Logo" className="h-10 object-contain" />}
+            {settings.logo_url && <Image src={settings.logo_url} alt="Logo" width={80} height={40} className="h-10 object-contain w-auto" />}
             <button onClick={() => fileRef.current?.click()} disabled={uploading}
               className="flex items-center gap-2 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50">
               <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload Logo'}

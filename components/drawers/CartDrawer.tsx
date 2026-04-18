@@ -9,7 +9,7 @@ import { formatPrice, cn } from '@/lib/utils'
 
 export function CartDrawer() {
   const { isCartOpen, toggleCart } = useUIStore()
-  const { items, removeItem, updateQuantity, getSubtotal, promoCode, discountAmount, setPromoCode, clearCart } = useCartStore()
+  const { items, removeItem, updateQuantity, getSubtotal, promoCode, discountAmount, setPromoCode } = useCartStore()
   const addToast = useToastStore((s) => s.addToast)
 
   const [promoInput, setPromoInput] = useState('')

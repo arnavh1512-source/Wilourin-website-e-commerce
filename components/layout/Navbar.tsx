@@ -32,7 +32,7 @@ export function Navbar() {
   const { toggleCart: uiToggleCart, toggleSearch } = useUIStore()
   const wishlistCount = useWishlistStore((s) => s.items.length)
   const cartCount = useCartStore((s) => s.getItemCount())
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<{ full_name?: string; avatar_url?: string; loyalty_tier?: string } | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [detectedCity, setDetectedCity] = useState<string>('')
 
@@ -144,7 +144,7 @@ export function Navbar() {
               <Link href={profile ? '/account' : '/login'} className="opacity-80 hover:opacity-100 transition-opacity relative" aria-label="Account">
                 <User size={20} />
                 {profile && (
-                  <span className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier])}>
+                  <span className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier ?? ''])}>
                     <Crown size={10} />
                   </span>
                 )}

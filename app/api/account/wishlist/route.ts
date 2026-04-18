@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 
 export async function GET() {
   const supabase = await createClient()
@@ -17,12 +18,15 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
-  const { id } = await request.json()
+  const body = await request.json()
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { error } = await supabase.from('wishlist').delete().eq('id', id).eq('user_id', user.id)
+  const { error } = await supabase.from('wishlist').delete().eq('id', parsed.data.id).eq('user_id', user.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

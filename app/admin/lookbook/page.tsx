@@ -6,9 +6,17 @@ import { Check, X } from 'lucide-react'
 import { useToastStore } from '@/lib/store'
 import { formatDate } from '@/lib/utils'
 
+interface Submission {
+  id: string
+  image_url: string
+  handle: string | null
+  caption: string | null
+  created_at: string
+}
+
 export default function AdminLookbookPage() {
   const addToast = useToastStore((s) => s.addToast)
-  const [submissions, setSubmissions] = useState<any[]>([])
+  const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('Pending')
 

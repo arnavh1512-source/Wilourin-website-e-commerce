@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   const growth = stats && stats.lastMonthRevenue > 0
     ? ((stats.thisMonthRevenue - stats.lastMonthRevenue) / stats.lastMonthRevenue * 100).toFixed(1)
     : null
-  const isGrowth = growth && Number(growth) >= 0
+  const isGrowth = growth != null && Number(growth) >= 0
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">

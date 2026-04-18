@@ -17,7 +17,7 @@ export async function GET() {
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('admin_users').select('user_id').eq('user_id', user.id).single(),
   ])
-  return NextResponse.json({ user, profile: profile ?? null, isAdmin: !!adminRow })
+  return NextResponse.json({ user: { id: user.id, email: user.email }, profile: profile ?? null, isAdmin: !!adminRow })
 }
 
 export async function PATCH(request: Request) {

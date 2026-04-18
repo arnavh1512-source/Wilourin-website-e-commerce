@@ -12,12 +12,24 @@ const schema = z.object({
   })).min(1).max(50),
 })
 
+interface ProductRow {
+  name: string
+  price: number
+  original_price: number | null
+  badge: string | null
+  description: string | null
+  categories: { name: string } | null
+}
+
+interface CategoryRow {
+  name: string
+  slug: string
+}
+
 export async function POST(req: NextRequest) {
-  // 20 requests per 15 minutes per IP
   const { allowed, retryAfterMs } = checkRateLimit(`adv-c:${getIP(req)}`, 20, 15 * 60 * 1000)
   if (!allowed) return tooManyRequests(retryAfterMs)
 
-  // Require authenticated session — route is unused on storefront but kept for future use
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -26,12 +38,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
-    // Anthropic requires messages to start with a user turn
     const firstUserIdx = parsed.data.messages.findIndex((m) => m.role === 'user')
     if (firstUserIdx === -1) return NextResponse.json({ error: 'No user message' }, { status: 400 })
     const messages = parsed.data.messages.slice(firstUserIdx)
 
-    // Fetch public product context — published products + categories only
     const admin = createAdminClient()
     const [{ data: products }, { data: categories }] = await Promise.all([
       admin.from('products')
@@ -41,7 +51,7 @@ export async function POST(req: NextRequest) {
       admin.from('categories').select('name, slug').order('name'),
     ])
 
-    const productContext = (products ?? []).map((p: any) => ({
+    const productContext = (products as ProductRow[] ?? []).map((p) => ({
       name: p.name,
       price: p.price,
       original_price: p.original_price,
@@ -55,7 +65,7 @@ export async function POST(req: NextRequest) {
 AVAILABLE PRODUCTS:
 ${JSON.stringify(productContext, null, 2)}
 
-CATEGORIES: ${(categories ?? []).map((c: any) => c.name).join(', ')}
+CATEGORIES: ${(categories as CategoryRow[] ?? []).map((c) => c.name).join(', ')}
 
 Guidelines:
 - Be warm, conversational, and fashion-forward
@@ -73,10 +83,7 @@ Guidelines:
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
       system: systemPrompt,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
     })
 
     const encoder = new TextEncoder()

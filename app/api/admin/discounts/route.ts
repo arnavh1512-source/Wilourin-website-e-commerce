@@ -2,14 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+// Field names match DB columns; enum matches validate/route.ts
 const discountSchema = z.object({
-  code: z.string().min(1).max(50),
-  discount_type: z.enum(['percentage', 'fixed']),
-  discount_value: z.number().positive(),
-  min_order_amount: z.number().min(0).optional().nullable(),
-  max_uses: z.number().int().positive().optional().nullable(),
+  code: z.string().min(1).max(50).toUpperCase(),
+  type: z.enum(['percentage', 'flat', 'free_shipping']),
+  value: z.number().min(0),
+  min_order_amount: z.number().min(0).optional().default(0),
+  usage_limit: z.number().int().positive().optional().nullable(),
+  per_user_limit: z.number().int().positive().optional().default(1),
   expires_at: z.string().datetime().optional().nullable(),
-  is_active: z.boolean().optional(),
+  is_active: z.boolean().optional().default(true),
 })
 
 const updateSchema = discountSchema.partial().extend({ id: z.string().uuid() })
@@ -70,6 +72,8 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const { z: zod } = await import('zod')
+  if (!zod.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
   const { error: dbError } = await supabase!.from('discount_codes').delete().eq('id', id)
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })

@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { CartItem, WishlistProduct, Profile, Toast, ToastType, AdvisorMessage } from './types'
+import type { CartItem, WishlistProduct, Profile, Toast, ToastType } from './types'
 
 // ─── CART STORE ──────────────────────────────────────────
 
@@ -109,14 +109,10 @@ interface UIStore {
   isMenuOpen: boolean
   isSearchOpen: boolean
   isHelpOpen: boolean
-  /** @deprecated advisor removed from storefront */
-  isAdvisorOpen: boolean
   toggleCart: () => void
   toggleMenu: () => void
   toggleSearch: () => void
   toggleHelp: () => void
-  /** @deprecated advisor removed from storefront */
-  toggleAdvisor: () => void
   closeAll: () => void
   setCartOpen: (open: boolean) => void
 }
@@ -126,14 +122,12 @@ export const useUIStore = create<UIStore>((set) => ({
   isMenuOpen: false,
   isSearchOpen: false,
   isHelpOpen: false,
-  isAdvisorOpen: false,
 
   toggleCart: () => set((s) => ({ isCartOpen: !s.isCartOpen, isMenuOpen: false, isSearchOpen: false })),
   toggleMenu: () => set((s) => ({ isMenuOpen: !s.isMenuOpen, isCartOpen: false, isSearchOpen: false })),
   toggleSearch: () => set((s) => ({ isSearchOpen: !s.isSearchOpen, isMenuOpen: false })),
   toggleHelp: () => set((s) => ({ isHelpOpen: !s.isHelpOpen })),
-  toggleAdvisor: () => set((s) => ({ isAdvisorOpen: !s.isAdvisorOpen })),
-  closeAll: () => set({ isCartOpen: false, isMenuOpen: false, isSearchOpen: false, isHelpOpen: false, isAdvisorOpen: false }),
+  closeAll: () => set({ isCartOpen: false, isMenuOpen: false, isSearchOpen: false, isHelpOpen: false }),
   setCartOpen: (open) => set({ isCartOpen: open }),
 }))
 
@@ -228,21 +222,3 @@ export const useToastStore = create<ToastStore>((set) => ({
   removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }))
 
-// ─── AI ADVISOR STORE ────────────────────────────────────
-
-interface AdvisorStore {
-  messages: AdvisorMessage[]
-  isLoading: boolean
-  addMessage: (msg: AdvisorMessage) => void
-  setLoading: (loading: boolean) => void
-  clearMessages: () => void
-}
-
-export const useAdvisorStore = create<AdvisorStore>((set) => ({
-  messages: [],
-  isLoading: false,
-
-  addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
-  setLoading: (loading) => set({ isLoading: loading }),
-  clearMessages: () => set({ messages: [] }),
-}))

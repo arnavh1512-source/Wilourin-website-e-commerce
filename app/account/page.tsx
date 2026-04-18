@@ -104,7 +104,7 @@ export default function AccountPage() {
           {tab === 'orders' && <OrdersTab />}
           {tab === 'wishlist' && <WishlistTab />}
           {tab === 'addresses' && <AddressesTab addToast={addToast} />}
-          {tab === 'loyalty' && <LoyaltyTab profile={profile} addToast={addToast} />}
+          {tab === 'loyalty' && <LoyaltyTab profile={profile} />}
         </div>
       </div>
     </div>
@@ -531,7 +531,7 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
 
 // ── Loyalty Tab ──────────────────────────────────────────────────────────────
 
-function LoyaltyTab({ profile, addToast }: { profile: Profile | null; addToast: (m: string, t: any) => void }) {
+function LoyaltyTab({ profile }: { profile: Profile | null }) {
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 

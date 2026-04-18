@@ -12,12 +12,21 @@ interface MeasurementRow {
   length: string
 }
 
+interface SizeGuide {
+  id: string
+  name: string
+  category_id: string | null
+  unit: string
+  measurements: { rows: MeasurementRow[]; columns: string[] } | null
+  categories: { name: string } | null
+}
+
 export default function AdminSizeGuidesPage() {
   const addToast = useToastStore((s) => s.addToast)
-  const [guides, setGuides] = useState<any[]>([])
+  const [guides, setGuides] = useState<SizeGuide[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<any | null>(null)
+  const [editing, setEditing] = useState<SizeGuide | null>(null)
   const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState({ name: '', category_id: '', unit: 'inches' })
@@ -53,7 +62,7 @@ export default function AdminSizeGuidesPage() {
     setShowForm(true)
   }
 
-  const openEdit = (g: any) => {
+  const openEdit = (g: SizeGuide) => {
     setEditing(g)
     setForm({ name: g.name, category_id: g.category_id ?? '', unit: g.unit ?? 'inches' })
     const tableData: MeasurementRow[] = g.measurements?.rows ?? []
@@ -93,7 +102,7 @@ export default function AdminSizeGuidesPage() {
       }
       setShowForm(false)
       load()
-    } catch (err) {
+    } catch {
       addToast('Save failed', 'error')
     } finally {
       setSaving(false)
@@ -129,7 +138,7 @@ export default function AdminSizeGuidesPage() {
             <div>
               <label className="text-xs text-gray-500 block mb-1">Guide Name *</label>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Men's Tops" className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
+                placeholder="Men&apos;s Tops" className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400" />
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">Unit</label>

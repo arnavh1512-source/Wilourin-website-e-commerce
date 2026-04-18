@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Heart, ShoppingBag, Star, ChevronDown, Share2, Users } from 'lucide-react'
+import { Heart, ShoppingBag, Star, Share2, Users } from 'lucide-react'
 import { useCartStore, useWishlistStore, useUIStore, useToastStore } from '@/lib/store'
-import { formatPrice, isLowStock, isOutOfStock, cn } from '@/lib/utils'
+import { formatPrice, isLowStock, cn } from '@/lib/utils'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { createClient } from '@/lib/supabase/client'
 import type { ProductVariant, Review } from '@/lib/types'

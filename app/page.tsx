@@ -62,15 +62,15 @@ export default async function HomePage() {
   return (
     <>
       <Hero
-        headline={settings?.hero_headline ?? null}
-        subtext={settings?.hero_subtext ?? null}
-        imageUrl={settings?.hero_image_url ?? null}
+        headline={(settings?.hero_headline as string) ?? null}
+        subtext={(settings?.hero_subtext as string) ?? null}
+        imageUrl={(settings?.hero_image_url as string) ?? null}
       />
       <TrustBadges />
-      <CategoryGrid categories={rawCategories ?? []} />
+      <CategoryGrid categories={(rawCategories ?? []) as Parameters<typeof CategoryGrid>[0]['categories']} />
       <ScarcityStrip />
       <FeaturedProducts products={featuredProducts as Parameters<typeof FeaturedProducts>[0]['products']} />
-      <CommunityFeed submissions={lookbook ?? []} />
+      <CommunityFeed submissions={(lookbook ?? []) as Parameters<typeof CommunityFeed>[0]['submissions']} />
       <NewsletterStrip />
     </>
   )

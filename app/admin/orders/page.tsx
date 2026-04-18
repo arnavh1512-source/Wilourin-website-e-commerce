@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, Printer, Bell } from 'lucide-react'
-import { formatDate, formatPrice } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 const STATUSES = ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Refund Requested']
 
@@ -23,7 +23,7 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [selected, setSelected] = useState<any | null>(null)
   const [saving, setSaving] = useState(false)
-  const [newOrderAlert, setNewOrderAlert] = useState(false)
+  const [newOrderAlert] = useState(false)
 
   const fetchOrders = async () => {
     setLoading(true)

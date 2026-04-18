@@ -86,7 +86,7 @@ export default function AdminCategoriesPage() {
       }
       setShowForm(false)
       load()
-    } catch (err) {
+    } catch {
       addToast('Save failed', 'error')
     } finally {
       setSaving(false)

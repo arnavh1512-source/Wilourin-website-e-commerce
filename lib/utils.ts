@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { randomBytes } from 'crypto'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -32,7 +33,6 @@ export function slugify(text: string): string {
 }
 
 export function generateOrderNumber(): string {
-  const { randomBytes } = require('crypto') as typeof import('crypto')
   return `WIL-${randomBytes(16).toString('hex').toUpperCase()}`
 }
 
@@ -61,9 +61,11 @@ export function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-export function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
   let timer: ReturnType<typeof setTimeout>
-  return ((...args: unknown[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((...args: any[]) => {
     clearTimeout(timer)
     timer = setTimeout(() => fn(...args), delay)
   }) as T
@@ -90,14 +92,14 @@ export function getEstimatedDelivery(shippingMethod: 'Standard' | 'Express', day
 }
 
 export const SCARCITY_MESSAGES = [
-  '12 people bought from us today',
-  '🔥 Trending — 47 views in the last hour',
-  '3 orders placed in the last 10 minutes',
-  '⚡ Flash sale ends soon',
-  'Most loved item this week',
-  '8 people have this in their cart',
-  'Back in stock — selling fast',
-  '🌍 Ships to 50+ countries',
+  'Trending this week',
+  'Flash sale — limited time',
+  'Most loved item this season',
+  'Back in stock — get it before it sells out',
+  'Ships to 50+ countries',
+  'Premium Indian streetwear',
+  'Limited edition drop',
+  'Customer favourite',
 ]
 
 export const INDIAN_STATES = [

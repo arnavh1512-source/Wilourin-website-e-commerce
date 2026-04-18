@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react'
-import { useWishlistStore, useCartStore, useToastStore } from '@/lib/store'
+import { useWishlistStore, useToastStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
-import type { Metadata } from 'next'
 
 export default function WishlistPage() {
   const { items, removeItem } = useWishlistStore()
-  const addToCart = useCartStore((s) => s.addItem)
   const addToast = useToastStore((s) => s.addToast)
   const [mounted, setMounted] = useState(false)
 

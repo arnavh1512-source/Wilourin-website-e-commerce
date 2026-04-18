@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+interface OrderTotal { total: number }
+interface OrderStatus { order_status: string }
+interface LowStockVariant {
+  product_id: string
+  size: string
+  stock_qty: number
+  products: { name: string } | null
+}
+
 export async function GET() {
   const supabase = await createClient()
 
@@ -23,7 +32,6 @@ export async function GET() {
     { data: lowStock },
     { data: recentOrders },
   ] = await Promise.all([
-    // Capped at 10 000 rows for revenue sum — use RPC for larger stores
     supabase.from('orders').select('total').eq('payment_status', 'Paid').limit(10000),
     supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfMonth).limit(10000),
     supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth).limit(10000),
@@ -33,13 +41,13 @@ export async function GET() {
     supabase.from('orders').select('id, order_number, order_status, total, created_at, guest_email, order_items(product_name, quantity)').order('created_at', { ascending: false }).limit(5),
   ])
 
-  const totalRevenue = (allPaidOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
-  const thisMonthRevenue = (thisMonthOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
-  const lastMonthRevenue = (lastMonthOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
+  const totalRevenue = (allPaidOrders as OrderTotal[] ?? []).reduce((s, o) => s + Number(o.total), 0)
+  const thisMonthRevenue = (thisMonthOrders as OrderTotal[] ?? []).reduce((s, o) => s + Number(o.total), 0)
+  const lastMonthRevenue = (lastMonthOrders as OrderTotal[] ?? []).reduce((s, o) => s + Number(o.total), 0)
 
   const statusCounts: Record<string, number> = {}
-  for (const o of allOrders ?? []) {
-    statusCounts[(o as any).order_status] = (statusCounts[(o as any).order_status] ?? 0) + 1
+  for (const o of allOrders as OrderStatus[] ?? []) {
+    statusCounts[o.order_status] = (statusCounts[o.order_status] ?? 0) + 1
   }
 
   return NextResponse.json({
@@ -52,8 +60,8 @@ export async function GET() {
     pendingOrders: statusCounts['Confirmed'] ?? 0,
     lowStockCount: (lowStock ?? []).length,
     recentOrders: recentOrders ?? [],
-    lowStockItems: (lowStock ?? []).slice(0, 5).map((v: any) => ({
-      product: (v.products as any)?.name ?? 'Unknown',
+    lowStockItems: ((lowStock ?? []) as unknown as LowStockVariant[]).slice(0, 5).map((v) => ({
+      product: v.products?.name ?? 'Unknown',
       size: v.size,
       qty: v.stock_qty,
     })),

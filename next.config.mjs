@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -13,7 +11,14 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverActions: { allowedOrigins: ['localhost:3000'] },
+    serverActions: {
+      allowedOrigins: [
+        'localhost:3000',
+        ...(process.env.NEXT_PUBLIC_SITE_URL
+          ? [process.env.NEXT_PUBLIC_SITE_URL.replace(/^https?:\/\//, '')]
+          : []),
+      ],
+    },
   },
   async headers() {
     return [
@@ -35,13 +40,13 @@ const nextConfig = {
         source: '/api/admin/:path*',
         headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
       },
-    ]
-  },
-  async rewrites() {
-    return [
       {
-        source: '/supabase-proxy/:path*',
-        destination: 'https://fneqxkgotfjbqdsvozsk.supabase.co/:path*',
+        source: '/api/paytm/:path*',
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
+      },
+      {
+        source: '/api/store/order',
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
       },
     ]
   },

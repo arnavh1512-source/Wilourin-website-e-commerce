@@ -10,7 +10,7 @@ export async function GET() {
   ])
 
   // Fetch featured products — validate IDs are UUIDs before querying
-  let featuredProducts: any[] = []
+  let featuredProducts: { id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null; product_images: unknown[] }[] = []
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   const validIds = (settings?.featured_product_ids ?? []).filter(
     (id: unknown): id is string => typeof id === 'string' && uuidRegex.test(id)

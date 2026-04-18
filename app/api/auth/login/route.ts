@@ -1,18 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
 
-export async function POST(request: Request) {
-  const { email, password } = await request.json()
+const loginSchema = z.object({
+  email: z.string().email().max(254),
+  password: z.string().min(1).max(128),
+})
+
+export async function POST(request: NextRequest) {
+  const { allowed, retryAfterMs } = checkRateLimit(`auth-login:${getIP(request)}`, 10, 60 * 1000)
+  if (!allowed) return tooManyRequests(retryAfterMs)
+
+  const body = await request.json()
+  const parsed = loginSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid email or password format' }, { status: 400 })
+
   const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 })
-  }
+  const { error } = await supabase.auth.signInWithPassword(parsed.data)
+  // Generic message — never reveal whether email exists
+  if (error) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
 
   return NextResponse.json({ success: true })
 }

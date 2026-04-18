@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { generateOrderNumber } from '@/lib/utils'
-// @ts-ignore — paytmchecksum has no types
+// @ts-expect-error — paytmchecksum has no types
 import PaytmChecksum from 'paytmchecksum'
 
 const PAYTM_BASE = process.env.PAYTM_WEBSITE === 'DEFAULT'
@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
     }
 
-    const admin = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createAdminClient() as any
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       .select('id, price, status')
       .in('id', productIds)
 
-    const priceMap = new Map((products ?? []).map((p) => [p.id, p.price]))
+    const priceMap = new Map<string, number>((products ?? []).map((p: { id: string; price: number }) => [p.id, p.price]))
 
     let subtotal = 0
     for (const item of cartItems) {
@@ -76,11 +77,33 @@ export async function POST(req: NextRequest) {
       const { data: profile } = await admin.from('profiles').select('loyalty_points').eq('id', user.id).single()
       const availablePoints = profile?.loyalty_points ?? 0
       const redeemable = Math.min(pointsToRedeem, availablePoints)
-      pointsDiscount = Math.floor(redeemable / 10) // 10 points = ₹1
+      pointsDiscount = Math.floor(redeemable / 10)
     }
 
     const total = Math.max(0, subtotal - discountAmount - pointsDiscount + shippingCost)
     const orderId = generateOrderNumber()
+
+    // ── Store order intent server-side — never trust client _meta ─────────────
+    const { error: intentErr } = await admin.from('pending_order_intents').insert({
+      order_id: orderId,
+      user_id: user?.id ?? null,
+      cart_items: cartItems,
+      address_id: addressId ?? null,
+      guest_address: guestAddress ?? null,
+      guest_email: guestEmail ?? user?.email ?? null,
+      subtotal,
+      discount_amount: discountAmount,
+      points_redeemed: pointsToRedeem ?? 0,
+      shipping_cost: shippingCost,
+      shipping_method: shippingMethod ?? 'Standard',
+      promo_code: promoCode ?? null,
+      total,
+    })
+
+    if (intentErr) {
+      console.error('[create-order] intent insert failed:', intentErr.message)
+      return NextResponse.json({ error: 'Failed to create order session' }, { status: 500 })
+    }
 
     // ── Generate Paytm checksum ───────────────────────────
     const paytmParams = {
@@ -116,31 +139,18 @@ export async function POST(req: NextRequest) {
     const paytmData = await paytmRes.json()
 
     if (!paytmData.body?.txnToken) {
-      return NextResponse.json({ error: 'Paytm token generation failed', details: paytmData }, { status: 500 })
+      return NextResponse.json({ error: 'Paytm token generation failed' }, { status: 500 })
     }
 
+    // _meta is NOT returned to the client — intent is stored server-side only
     return NextResponse.json({
       orderId,
       txnToken: paytmData.body.txnToken,
       amount: total.toFixed(2),
       callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/paytm/verify-payment`,
-      // Pass metadata for verify step
-      _meta: {
-        cartItems,
-        addressId,
-        guestAddress,
-        guestEmail: guestEmail ?? user?.email,
-        userId: user?.id ?? null,
-        subtotal,
-        discountAmount,
-        pointsRedeemed: pointsToRedeem ?? 0,
-        shippingCost,
-        shippingMethod,
-        promoCode: promoCode ?? null,
-        total,
-      },
     })
   } catch (err) {
+    console.error('[create-order]', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

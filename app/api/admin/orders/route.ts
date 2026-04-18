@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   const status = searchParams.get('status')
   const search = searchParams.get('search')
 
-  let q = supabase!.from('orders').select('*, order_items(*)').order('created_at', { ascending: false })
+  let q = supabase!.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(500)
   if (status) q = q.eq('order_status', status)
   if (search) q = q.or(`order_number.ilike.%${search}%,guest_email.ilike.%${search}%`)
 

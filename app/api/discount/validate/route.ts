@@ -4,6 +4,19 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
 
+interface DiscountCode {
+  id: string
+  code: string
+  type: 'percentage' | 'flat' | 'free_shipping'
+  value: number
+  expiry_date: string | null
+  usage_limit: number | null
+  usage_count: number
+  min_order_amount: number
+  per_user_limit: number
+  is_active: boolean
+}
+
 const schema = z.object({
   code: z.string().min(1).max(50).regex(/^[A-Z0-9_-]+$/i),
   subtotal: z.number().min(0).max(1_000_000),
@@ -28,7 +41,7 @@ export async function POST(req: NextRequest) {
       .select('*')
       .eq('code', code.toUpperCase())
       .eq('is_active', true)
-      .single()
+      .single() as unknown as { data: DiscountCode | null }
 
     if (!discount) return NextResponse.json({ valid: false, message: 'Invalid or expired promo code' })
 
@@ -79,7 +92,7 @@ export async function POST(req: NextRequest) {
       code: { code: discount.code, type: discount.type, value: discount.value },
       discountAmount,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ valid: false, message: 'Server error' }, { status: 500 })
   }
 }

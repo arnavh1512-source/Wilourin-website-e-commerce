@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -35,7 +36,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File must be under 10 MB' }, { status: 400 })
     }
 
-    const { randomBytes } = require('crypto') as typeof import('crypto')
     const ext = file.type.split('/')[1].replace('jpeg', 'jpg').replace('svg+xml', 'svg')
     const fileName = `${randomBytes(16).toString('hex')}.${ext}`
 

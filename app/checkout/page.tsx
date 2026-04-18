@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   const { profile } = useUserStore()
   const addToast = useToastStore((s) => s.addToast)
 
-  const [step, setStep] = useState(0)
+  const [step] = useState(0)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
   const [useNewAddress, setUseNewAddress] = useState(false)
@@ -88,14 +88,8 @@ export default function CheckoutPage() {
   const pointsDiscount = redeemPoints ? Math.floor(maxPointsRedeemable / 10) : 0
   const total = Math.max(0, subtotal - discountAmount - pointsDiscount + shippingCost)
 
+  // Fetch store settings once on mount
   useEffect(() => {
-    if (items.length === 0) { router.replace('/'); return }
-
-    // Seed city from localStorage
-    const stored = getStoredCity()
-    if (stored) setDetectedCity(stored)
-
-    // Load store settings
     fetch('/api/store/settings').then((r) => r.json()).then((data) => {
       if (data) setStoreSettings({
         freeThreshold: data.free_shipping_threshold,
@@ -106,13 +100,20 @@ export default function CheckoutPage() {
         pointsPerRupee: data.loyalty_points_per_rupee,
       })
     })
+  }, [])
 
-    // Load saved addresses
+  // Redirect empty cart; load addresses when profile is available
+  useEffect(() => {
+    if (items.length === 0) { router.replace('/'); return }
+
+    const stored = getStoredCity()
+    if (stored) setDetectedCity(stored)
+
     if (profile) {
       fetch('/api/account/addresses').then((r) => r.json()).then((data) => {
         const addresses = Array.isArray(data) ? data : []
         setSavedAddresses(addresses)
-        const def = addresses.find((a: any) => a.is_default)
+        const def = addresses.find((a: Address) => a.is_default)
         if (def) setSelectedAddressId(def.id)
         else if (addresses.length) setSelectedAddressId(addresses[0].id)
         else setUseNewAddress(true)
@@ -166,14 +167,14 @@ export default function CheckoutPage() {
         },
         merchant: { redirect: false },
         handler: {
-          notifyMerchant: async (eventName: string, eventData: Record<string, string>) => {
+          notifyMerchant: async (eventName: string) => {
             if (eventName === 'APP_CLOSED') { setPaying(false) }
           },
           transactionStatus: async (paymentData: Record<string, string>) => {
             const verifyRes = await fetch('/api/paytm/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...paymentData, _meta: data._meta }),
+              body: JSON.stringify({ ...paymentData }),
             })
             const verified = await verifyRes.json()
             if (verified.success) {

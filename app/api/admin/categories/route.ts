@@ -69,6 +69,8 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const { z } = await import('zod')
+  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
   const { error: dbError } = await supabase!.from('categories').delete().eq('id', id)
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })

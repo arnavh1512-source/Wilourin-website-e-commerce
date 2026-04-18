@@ -52,7 +52,7 @@ export function LookbookClient({ submissions }: Props) {
         reset()
         setShowForm(false)
       }
-    } catch (err) {
+    } catch {
       addToast('Failed to submit. Please try again.', 'error')
     } finally {
       setSubmitting(false)

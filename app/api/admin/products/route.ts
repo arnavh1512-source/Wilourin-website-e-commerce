@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const PRODUCT_STATUSES = ['Draft', 'Published', 'Archived'] as const
-const BADGE_VALUES = ['New', 'Sale', 'Hot', 'Limited', null] as const
 
 const productSchema = z.object({
   name: z.string().min(1).max(300),
@@ -161,6 +160,8 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const { z } = await import('zod')
+  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
   const { error: deleteError } = await supabase!.from('products').delete().eq('id', id)
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })

@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient()
 
-    const { error } = await admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (admin as any)
       .from('newsletter_subscribers')
       .upsert({ email, is_active: true }, { onConflict: 'email' })
 
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, message: 'Invalid email' }, { status: 400 })
   }
 }
