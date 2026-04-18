@@ -7,7 +7,7 @@ import { ToastContainer } from '@/components/ui/ToastContainer'
 import { CookieBanner } from '@/components/ui/CookieBanner'
 import { CartDrawer } from '@/components/drawers/CartDrawer'
 import { HelpDrawer } from '@/components/drawers/HelpDrawer'
-import { GlitchIntro } from '@/components/GlitchIntro'
+import { SplashScreen } from '@/components/SplashScreen'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,15 +28,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-white text-[#0A0A0A] antialiased">
+      <body className="bg-w-bg text-w-dark antialiased">
         <Providers>
-          <GlitchIntro />
+          <SplashScreen />
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <Footer />
           <CartDrawer />
           <HelpDrawer />
-<ToastContainer />
+          <ToastContainer />
           <CookieBanner />
         </Providers>
       </body>

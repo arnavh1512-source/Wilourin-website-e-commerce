@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #0A0A0A;
+  --background: #E2E2E2;
+  --foreground: #1A1A1A;
   --font-cormorant: 'Cormorant Garamond', Georgia, serif;
   --font-inter: 'Inter', system-ui, sans-serif;
 }
@@ -34,11 +34,11 @@ h1, h2, h3 {
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #0A0A0A; border-radius: 2px; }
+::-webkit-scrollbar-track { background: #CECECE; }
+::-webkit-scrollbar-thumb { background: #1A1A1A; border-radius: 2px; }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #CECECE 25%, #C0C0C0 50%, #CECECE 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -50,7 +50,7 @@ h1, h2, h3 {
 }
 .product-image-wrap:hover img.secondary { opacity: 1; }
 
-:focus-visible { outline: 2px solid #0A0A0A; outline-offset: 2px; }
+:focus-visible { outline: 2px solid #1A1A1A; outline-offset: 2px; }
 
 .drawer-backdrop {
   backdrop-filter: blur(2px);
@@ -62,4 +62,13 @@ h1, h2, h3 {
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
+}
+
+/* Splash letter animation */
+@layer utilities {
+  .splash-letter {
+    opacity: 0;
+    display: inline-block;
+    animation: letterIn 0.5s ease-out forwards;
+  }
 }

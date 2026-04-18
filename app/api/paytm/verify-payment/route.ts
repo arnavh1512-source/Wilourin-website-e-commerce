@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { randomBytes } from 'crypto'
 // @ts-expect-error — paytmchecksum has no types
 import PaytmChecksum from 'paytmchecksum'
 
@@ -71,8 +72,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Order session not found or already used' }, { status: 400 })
     }
 
-    // ── Reconcile Paytm's verified amount against server-computed total ───────
-    const paytmVerifiedAmount = parseFloat(txnAmount)
+    // ── Reconcile Paytm's OWN verified amount (from status API) against server-computed total ──
+    // Never use client-supplied txnAmount for this check — use statusData directly
+    const paytmVerifiedAmount = parseFloat(statusData.body?.txnAmount?.value ?? '0')
     if (Math.abs(paytmVerifiedAmount - Number(intent.total)) > 0.5) {
       console.error(`[verify-payment] amount mismatch: Paytm=${paytmVerifiedAmount}, intent=${intent.total}`)
       return NextResponse.json({ success: false, error: 'Payment amount mismatch' }, { status: 400 })
@@ -93,6 +95,9 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Insert order ──────────────────────────────────────
+    // Generate an unguessable token for guest order lookup (never exposed to logged-in users)
+    const accessToken = intent.user_id ? null : randomBytes(32).toString('hex')
+
     const { data: order, error: orderErr } = await admin
       .from('orders')
       .insert({
@@ -112,6 +117,7 @@ export async function POST(req: NextRequest) {
         paytm_txn_id: txnId,
         paytm_txn_amount: txnAmount,
         promo_code: intent.promo_code ?? null,
+        access_token: accessToken,
       })
       .select('id')
       .single()

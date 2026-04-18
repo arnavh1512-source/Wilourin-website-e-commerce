@@ -1,18 +1,35 @@
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/ui/ProductCard'
-import { SkeletonGrid } from '@/components/ui/SkeletonCard'
-import { SortSelect } from '@/components/ui/SortSelect'
 import { Suspense } from 'react'
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Shop All' }
 export const revalidate = 60
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const BADGES = ['New Arrival', 'Sale', 'Bestseller', 'Low Stock']
+
+const FILTER_PILLS = [
+  { label: 'View All', href: '/products' },
+  { label: 'Men', href: '/products?category=men' },
+  { label: 'Women', href: '/products?category=women' },
+  { label: 'Accessories', href: '/products?category=accessories' },
+  { label: 'New', href: '/products?badge=New+Arrival' },
+  { label: 'Sale', href: '/products?badge=Sale' },
+]
 
 interface Props {
   searchParams: Record<string, string | string[] | undefined>
+}
+
+function isActive(pill: { href: string }, { category, badge }: { category?: string; badge?: string }) {
+  if (pill.href === '/products') return !category && !badge
+  if (pill.href.includes('category=men')) return category === 'men'
+  if (pill.href.includes('category=women')) return category === 'women'
+  if (pill.href.includes('category=accessories')) return category === 'accessories'
+  if (pill.href.includes('New+Arrival')) return badge === 'New Arrival'
+  if (pill.href.includes('Sale')) return badge === 'Sale'
+  return false
 }
 
 export default async function ProductsPage({ searchParams }: Props) {
@@ -26,14 +43,12 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const supabase = await createClient()
 
-  // Fetch categories for filter sidebar
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, slug, parent_id')
     .eq('is_active', true)
     .order('display_order')
 
-  // Build product query
   let query = supabase
     .from('products')
     .select('id, name, slug, price, original_price, badge, category_id, product_images(id, image_url, is_primary, display_order)')
@@ -43,8 +58,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     const cat = categories?.find((c) => c.slug === category)
     if (cat) {
       const subCatIds = (categories ?? []).filter((c) => c.parent_id === cat.id).map((c) => c.id)
-      const ids = [cat.id, ...subCatIds]
-      query = query.in('category_id', ids)
+      query = query.in('category_id', [cat.id, ...subCatIds])
     }
   }
   if (badge) query = query.eq('badge', badge)
@@ -57,7 +71,6 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const { data: products } = await query.limit(200)
 
-  // Size filter post-query (requires variant join)
   let filteredProducts = products ?? []
   if (size) {
     const { data: variantProductIds } = await supabase
@@ -69,119 +82,122 @@ export default async function ProductsPage({ searchParams }: Props) {
     filteredProducts = filteredProducts.filter((p) => ids.has(p.id))
   }
 
-  const parentCategories = (categories ?? []).filter((c) => !c.parent_id)
-
   const buildHref = (params: Record<string, string | undefined>) => {
     const base = new URLSearchParams()
     const merged = { category, size, badge, sort, ...params }
     Object.entries(merged).forEach(([k, v]) => { if (v) base.set(k, v) })
-    return `/products?${base.toString()}`
+    const qs = base.toString()
+    return `/products${qs ? `?${qs}` : ''}`
   }
 
+  const title = category
+    ? category.charAt(0).toUpperCase() + category.slice(1)
+    : badge ?? 'All Products'
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="mb-8">
-        <h1 className="font-serif text-4xl mb-1">{category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All Products'}</h1>
-        <p className="text-sm text-gray-500">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</p>
+    <div className="bg-w-bg min-h-screen">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
+        <h1 className="font-serif text-w-dark text-4xl mb-1">{title}</h1>
+        <p className="font-sans text-sm text-w-graphite">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters sidebar */}
-        <aside className="lg:w-52 shrink-0 space-y-8">
-          {/* Category */}
-          <div>
-            <h3 className="text-xs uppercase tracking-widest font-semibold mb-3">Category</h3>
-            <ul className="space-y-1.5">
-              <li>
-                <a href="/products" className={`text-sm ${!category ? 'font-semibold' : 'text-gray-600 hover:text-black'}`}>All</a>
-              </li>
-              {parentCategories.map((cat) => (
-                <li key={cat.id}>
-                  <a href={buildHref({ category: cat.slug })} className={`text-sm ${category === cat.slug ? 'font-semibold' : 'text-gray-600 hover:text-black'}`}>
-                    {cat.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Size */}
-          <div>
-            <h3 className="text-xs uppercase tracking-widest font-semibold mb-3">Size</h3>
-            <div className="flex flex-wrap gap-2">
-              {SIZES.map((s) => (
-                <a
-                  key={s}
-                  href={buildHref({ size: size === s ? undefined : s })}
-                  className={`text-xs border px-2.5 py-1 rounded transition-colors ${size === s ? 'bg-[#0A0A0A] text-white border-[#0A0A0A]' : 'border-gray-300 text-gray-600 hover:border-gray-600'}`}
+      {/* Horizontal filter pills */}
+      <div className="sticky top-16 z-30 bg-w-bg/95 backdrop-blur-sm border-b border-w-ghost">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-none">
+            {FILTER_PILLS.map((pill) => {
+              const active = isActive(pill, { category, badge })
+              return (
+                <Link
+                  key={pill.href}
+                  href={pill.href}
+                  className={`flex-shrink-0 font-sans text-xs tracking-widest uppercase px-4 py-2 rounded-none transition-colors ${
+                    active
+                      ? 'bg-w-dark text-white'
+                      : 'border border-w-ghost text-w-graphite hover:border-w-dark hover:text-w-dark'
+                  }`}
                 >
-                  {s}
-                </a>
+                  {pill.label}
+                </Link>
+              )
+            })}
+
+            {/* Size pills */}
+            <div className="w-px h-5 bg-w-ghost mx-2 flex-shrink-0" />
+            {SIZES.map((s) => (
+              <Link
+                key={s}
+                href={buildHref({ size: size === s ? undefined : s })}
+                className={`flex-shrink-0 font-sans text-xs tracking-widest uppercase px-3 py-2 rounded-none transition-colors ${
+                  size === s
+                    ? 'bg-w-forest text-white'
+                    : 'border border-w-ghost text-w-graphite hover:border-w-dark hover:text-w-dark'
+                }`}
+              >
+                {s}
+              </Link>
+            ))}
+
+            {/* Sort */}
+            <div className="ml-auto flex-shrink-0 flex items-center gap-2">
+              {(['newest', 'price_asc', 'price_desc'] as const).map((s) => (
+                <Link
+                  key={s}
+                  href={buildHref({ sort: s })}
+                  className={`font-sans text-xs tracking-widest uppercase px-3 py-2 rounded-none transition-colors ${
+                    sort === s ? 'text-w-dark font-medium' : 'text-w-graphite hover:text-w-dark'
+                  }`}
+                >
+                  {s === 'newest' ? 'New' : s === 'price_asc' ? 'Low' : 'High'}
+                </Link>
               ))}
             </div>
           </div>
-
-          {/* Badge */}
-          <div>
-            <h3 className="text-xs uppercase tracking-widest font-semibold mb-3">Collection</h3>
-            <ul className="space-y-1.5">
-              {BADGES.map((b) => (
-                <li key={b}>
-                  <a href={buildHref({ badge: badge === b ? undefined : b })} className={`text-sm ${badge === b ? 'font-semibold' : 'text-gray-600 hover:text-black'}`}>
-                    {b}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Clear */}
-          {(category || size || badge) && (
-            <a href="/products" className="text-xs underline text-gray-500 hover:text-black">Clear all filters</a>
-          )}
-        </aside>
-
-        {/* Product grid */}
-        <div className="flex-1">
-          {/* Sort */}
-          <div className="flex justify-end mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Sort:</span>
-              <SortSelect value={sort} />
-            </div>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <p className="font-serif text-2xl mb-2">No products found</p>
-              <p className="text-sm mb-6">Try adjusting your filters.</p>
-              <a href="/products" className="text-xs uppercase tracking-widest underline">Clear filters</a>
-            </div>
-          ) : (
-            <Suspense fallback={<SkeletonGrid />}>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {filteredProducts.map((product) => {
-                  const imgs = (product.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? []
-                  const primary = imgs.find((i) => i.is_primary) ?? imgs[0]
-                  const secondary = imgs.find((i) => !i.is_primary)
-                  return (
-                    <ProductCard
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      slug={product.slug}
-                      price={product.price}
-                      original_price={product.original_price}
-                      badge={product.badge}
-                      primaryImage={primary?.image_url ?? 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600'}
-                      secondaryImage={secondary?.image_url}
-                    />
-                  )
-                })}
-              </div>
-            </Suspense>
-          )}
         </div>
+      </div>
+
+      {/* Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-24">
+            <p className="font-serif text-w-dark text-2xl mb-2">No products found</p>
+            <p className="font-sans text-sm text-w-graphite mb-6">Try adjusting your filters.</p>
+            <Link href="/products" className="font-sans text-xs uppercase tracking-widest underline text-w-graphite hover:text-w-dark">Clear filters</Link>
+          </div>
+        ) : (
+          <Suspense fallback={
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-w-ghost">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-w-surface skeleton" style={{ aspectRatio: i % 2 === 0 ? '2/3' : '3/4' }} />
+              ))}
+            </div>
+          }>
+            {/* Zara-style staggered masonry */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-w-ghost">
+              {filteredProducts.map((product, index) => {
+                const imgs = (product.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? []
+                const primary = imgs.find((i) => i.is_primary) ?? imgs[0]
+                const secondary = imgs.find((i) => !i.is_primary)
+                const aspectRatio = index % 2 === 0 ? '2/3' : '3/4'
+                return (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    slug={product.slug}
+                    price={product.price}
+                    original_price={product.original_price}
+                    badge={product.badge}
+                    primaryImage={primary?.image_url ?? 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600'}
+                    secondaryImage={secondary?.image_url}
+                    aspectRatio={aspectRatio}
+                  />
+                )
+              })}
+            </div>
+          </Suspense>
+        )}
       </div>
     </div>
   )

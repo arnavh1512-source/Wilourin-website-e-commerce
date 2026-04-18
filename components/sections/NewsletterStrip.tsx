@@ -34,35 +34,35 @@ export function NewsletterStrip() {
   }
 
   return (
-    <section className="py-20 bg-[#0A0A0A] text-white">
+    <section className="py-20 bg-w-dark text-white">
       <div className="max-w-2xl mx-auto px-4 text-center">
-        <p className="text-xs uppercase tracking-[0.4em] text-gray-400 mb-4">Stay in the loop</p>
-        <h2 className="font-serif text-4xl sm:text-5xl mb-4">Join the Movement</h2>
-        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+        <p className="font-sans text-xs uppercase tracking-[0.4em] text-white/40 mb-4">Stay in the loop</p>
+        <h2 className="font-serif text-4xl sm:text-5xl text-white mb-4">Join the Movement</h2>
+        <p className="font-sans text-white/50 text-sm mb-8 leading-relaxed">
           Subscribe for exclusive drops, early access, and <strong className="text-white">10% off</strong> your first order.
         </p>
         {done ? (
-          <p className="text-green-400 text-lg font-serif">You&apos;re in. Welcome to Wilourin. 🖤</p>
+          <p className="font-serif text-w-forest text-lg">You&apos;re in. Welcome to Wilourin.</p>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-0 max-w-md mx-auto">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               required
-              className="flex-1 bg-white/10 border border-white/20 text-white placeholder-gray-500 px-4 py-3 text-sm outline-none focus:border-white/50 transition-colors rounded-none"
+              className="flex-1 bg-transparent border border-white/30 text-white placeholder:text-white/40 px-4 py-3 text-sm outline-none focus:border-white/60 transition-colors rounded-none"
             />
             <button
               type="submit"
               disabled={loading}
-              className="bg-white text-[#0A0A0A] px-8 py-3 text-xs uppercase tracking-widest font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="bg-w-forest text-white px-8 py-3 font-sans text-xs uppercase tracking-widest hover:bg-w-emerald transition-colors disabled:opacity-50 rounded-none"
             >
               {loading ? 'Subscribing…' : 'Subscribe'}
             </button>
           </form>
         )}
-        <p className="text-xs text-gray-600 mt-4">No spam. Unsubscribe anytime.</p>
+        <p className="font-sans text-xs text-white/30 mt-4">No spam. Unsubscribe anytime.</p>
       </div>
     </section>
   )

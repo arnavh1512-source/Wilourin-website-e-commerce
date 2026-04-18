@@ -18,7 +18,7 @@ export function AnnouncementBar({ text }: AnnouncementBarProps) {
   if (!visible || !text) return null
 
   return (
-    <div className="bg-[#0A0A0A] text-white text-xs text-center py-2.5 px-10 relative tracking-widest uppercase font-sans">
+    <div className="bg-w-dark text-white text-xs text-center py-2.5 px-10 relative tracking-widest uppercase font-sans">
       <span>{text}</span>
       <button
         onClick={() => {

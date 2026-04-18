@@ -65,21 +65,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-w-bg">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <h1 className="font-serif text-4xl mb-2">Welcome Back</h1>
-          <p className="text-gray-500 text-sm">Sign in to your Wilourin account</p>
+          <h1 className="font-serif text-w-dark text-4xl mb-2">Welcome Back</h1>
+          <p className="font-sans text-w-graphite text-sm">Sign in to your Wilourin account</p>
         </div>
 
         {forgotSent && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded mb-5">
+          <div className="bg-w-surface border border-w-ghost text-w-dark font-sans text-sm px-4 py-3 mb-5">
             Password reset link sent! Check your inbox.
           </div>
         )}
 
         {errorMsg && (
-          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded mb-5">
+          <div className="flex items-start gap-2 border border-red-300 bg-red-50 text-red-700 font-sans text-sm px-4 py-3 mb-5">
             <AlertCircle size={16} className="shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
@@ -87,58 +87,58 @@ export default function LoginPage() {
 
         {forgotMode ? (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">Enter your email and we&apos;ll send a reset link.</p>
+            <p className="font-sans text-sm text-w-graphite">Enter your email and we&apos;ll send a reset link.</p>
             <input
               type="email"
               value={forgotEmail}
               onChange={(e) => setForgotEmail(e.target.value)}
-              className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400"
+              className="w-full bg-w-surface border border-w-ghost px-4 py-3 font-sans text-sm text-w-dark outline-none focus:border-w-dark focus:ring-1 focus:ring-w-dark rounded-none"
               placeholder="your@email.com"
             />
-            <button onClick={handleForgot} className="w-full bg-[#0A0A0A] text-white py-3 text-xs uppercase tracking-widest">
+            <button onClick={handleForgot} className="w-full bg-w-forest text-white font-sans py-3 text-xs uppercase tracking-widest hover:bg-w-emerald transition-colors rounded-none">
               Send Reset Link
             </button>
-            <button onClick={() => setForgotMode(false)} className="w-full text-sm text-gray-500 underline">
+            <button onClick={() => setForgotMode(false)} className="w-full font-sans text-sm text-w-graphite underline">
               ← Back to login
             </button>
           </div>
         ) : (
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
-              <label className="text-xs uppercase tracking-widest text-gray-500 block mb-1.5">Email</label>
+              <label className="font-sans text-xs uppercase tracking-widest text-w-graphite block mb-1.5">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400 transition-colors"
+                className="w-full bg-w-surface border border-w-ghost px-4 py-3 font-sans text-sm text-w-dark outline-none focus:border-w-dark focus:ring-1 focus:ring-w-dark transition-colors rounded-none"
                 placeholder="your@email.com"
               />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-widest text-gray-500 block mb-1.5">Password</label>
+              <label className="font-sans text-xs uppercase tracking-widest text-w-graphite block mb-1.5">Password</label>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400 transition-colors pr-10"
+                  className="w-full bg-w-surface border border-w-ghost px-4 py-3 font-sans text-sm text-w-dark outline-none focus:border-w-dark focus:ring-1 focus:ring-w-dark transition-colors pr-10 rounded-none"
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-w-graphite">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            <button type="button" onClick={() => setForgotMode(true)} className="text-xs text-gray-400 underline float-right -mt-2">
+            <button type="button" onClick={() => setForgotMode(true)} className="font-sans text-xs text-w-graphite underline float-right -mt-2">
               Forgot password?
             </button>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#0A0A0A] text-white py-3.5 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-50 clear-both"
+              className="w-full bg-w-forest text-white font-sans py-3.5 text-xs uppercase tracking-widest hover:bg-w-emerald transition-colors disabled:opacity-50 clear-both rounded-none"
             >
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
@@ -148,13 +148,13 @@ export default function LoginPage() {
         {!forgotMode && (
           <>
             <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 border-t border-gray-200" />
-              <span className="text-xs text-gray-400">or</span>
-              <div className="flex-1 border-t border-gray-200" />
+              <div className="flex-1 border-t border-w-ghost" />
+              <span className="font-sans text-xs text-w-graphite">or</span>
+              <div className="flex-1 border-t border-w-ghost" />
             </div>
             <button
               onClick={handleGoogle}
-              className="w-full border border-gray-200 py-3 text-sm flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
+              className="w-full border border-w-ghost bg-w-surface py-3 font-sans text-sm flex items-center justify-center gap-3 hover:border-w-dark transition-colors rounded-none"
             >
               <svg width="18" height="18" viewBox="0 0 18 18">
                 <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -164,9 +164,9 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </button>
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center font-sans text-sm text-w-graphite mt-6">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-[#0A0A0A] underline font-medium">Sign up</Link>
+              <Link href="/signup" className="text-w-forest underline font-medium">Sign up</Link>
             </p>
           </>
         )}

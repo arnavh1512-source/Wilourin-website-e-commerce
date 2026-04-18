@@ -4,11 +4,11 @@ import { SCARCITY_MESSAGES } from '@/lib/utils'
 
 export function ScarcityStrip() {
   return (
-    <div className="bg-[#0A0A0A] text-white py-3 overflow-hidden">
+    <div className="bg-w-forest text-white py-3 overflow-hidden">
       <div className="flex items-center justify-center gap-12">
         <div className="flex whitespace-nowrap animate-ticker">
           {[...SCARCITY_MESSAGES, ...SCARCITY_MESSAGES].map((msg, i) => (
-            <span key={i} className="text-xs uppercase tracking-widest mx-12 text-gray-300">
+            <span key={i} className="font-sans text-xs uppercase tracking-widest mx-12 text-white/80">
               {msg}
             </span>
           ))}

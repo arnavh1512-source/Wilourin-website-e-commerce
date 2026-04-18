@@ -49,7 +49,6 @@ export function Navbar() {
       .catch(() => {})
   }, [])
 
-  // Silent city detection — IP-based, never blocks, falls back gracefully
   useEffect(() => {
     const stored = getStoredCity()
     if (stored) { setDetectedCity(stored); return }
@@ -74,15 +73,18 @@ export function Navbar() {
   const isAdminRoute = pathname.startsWith('/admin')
   if (isAdminRoute) return null
 
+  const isHome = pathname === '/'
+  const transparent = isHome && !scrolled
+
   return (
     <>
       <AnnouncementBar text={announcement ?? (detectedCity ? `Delivering to ${detectedCity}` : null)} />
       <header
         className={cn(
           'sticky top-0 z-50 w-full transition-all duration-300',
-          scrolled || pathname !== '/'
-            ? 'bg-white border-b border-gray-100 shadow-sm'
-            : 'bg-transparent'
+          transparent
+            ? 'bg-transparent'
+            : 'bg-w-bg border-b border-w-ghost shadow-sm'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,8 +96,12 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'text-xs uppercase tracking-widest font-medium transition-opacity hover:opacity-60',
-                    pathname === link.href ? 'opacity-100' : 'opacity-80'
+                    'font-sans text-sm tracking-wide transition-colors duration-200',
+                    pathname === link.href
+                      ? 'text-w-forest border-b border-w-forest'
+                      : transparent
+                        ? 'text-white hover:text-white/70'
+                        : 'text-w-dark hover:text-w-forest'
                   )}
                 >
                   {link.label}
@@ -105,7 +111,7 @@ export function Navbar() {
 
             {/* Mobile — hamburger */}
             <button
-              className="lg:hidden p-2"
+              className={cn('lg:hidden p-2 transition-colors', transparent ? 'text-white' : 'text-w-dark hover:text-w-forest')}
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -115,33 +121,52 @@ export function Navbar() {
             {/* Center — Logo */}
             <Link
               href="/"
-              className="absolute left-1/2 -translate-x-1/2 font-serif text-2xl font-semibold tracking-[0.15em] uppercase"
+              className={cn(
+                'absolute left-1/2 -translate-x-1/2 font-serif text-2xl tracking-[0.15em] uppercase transition-colors',
+                transparent ? 'text-white' : 'text-w-dark'
+              )}
             >
               Wilourin
             </Link>
 
             {/* Right — Icons */}
             <div className="flex items-center gap-4">
-              <button onClick={toggleSearch} aria-label="Search" className="opacity-80 hover:opacity-100 transition-opacity">
+              <button
+                onClick={toggleSearch}
+                aria-label="Search"
+                className={cn('transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+              >
                 <Search size={20} />
               </button>
-              <Link href="/wishlist" className="relative opacity-80 hover:opacity-100 transition-opacity" aria-label="Wishlist">
+              <Link
+                href="/wishlist"
+                className={cn('relative transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                aria-label="Wishlist"
+              >
                 <Heart size={20} />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#0A0A0A] text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  <span className="absolute -top-1.5 -right-1.5 bg-w-forest text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
-              <button onClick={uiToggleCart} className="relative opacity-80 hover:opacity-100 transition-opacity" aria-label="Cart">
+              <button
+                onClick={uiToggleCart}
+                className={cn('relative transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                aria-label="Cart"
+              >
                 <ShoppingBag size={20} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#0A0A0A] text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce-once">
+                  <span className="absolute -top-1.5 -right-1.5 bg-w-forest text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce-once">
                     {cartCount}
                   </span>
                 )}
               </button>
-              <Link href={profile ? '/account' : '/login'} className="opacity-80 hover:opacity-100 transition-opacity relative" aria-label="Account">
+              <Link
+                href={profile ? '/account' : '/login'}
+                className={cn('relative transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                aria-label="Account"
+              >
                 <User size={20} />
                 {profile && (
                   <span className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier ?? ''])}>
@@ -150,7 +175,7 @@ export function Navbar() {
                 )}
               </Link>
               {isAdmin && (
-                <Link href="/admin" className="hidden lg:block text-xs uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">
+                <Link href="/admin" className="hidden lg:block font-sans text-xs uppercase tracking-widest text-w-graphite hover:text-w-dark transition-colors">
                   Admin
                 </Link>
               )}
@@ -161,10 +186,10 @@ export function Navbar() {
 
       {/* Mobile full-screen menu */}
       {menuOpen && (
-        <div className="fixed inset-0 z-[60] bg-white flex flex-col animate-fade-in">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-            <span className="font-serif text-2xl tracking-[0.15em] uppercase">Wilourin</span>
-            <button onClick={() => setMenuOpen(false)} aria-label="Close menu"><X size={24} /></button>
+        <div className="fixed inset-0 z-[60] bg-w-bg flex flex-col animate-fade-in">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-w-ghost">
+            <span className="font-serif text-2xl tracking-[0.15em] uppercase text-w-dark">Wilourin</span>
+            <button onClick={() => setMenuOpen(false)} className="text-w-dark" aria-label="Close menu"><X size={24} /></button>
           </div>
           <nav className="flex flex-col gap-1 p-6 flex-1">
             {NAV_LINKS.map((link) => (
@@ -172,23 +197,23 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="py-4 text-2xl font-serif border-b border-gray-100 hover:pl-2 transition-all"
+                className="py-4 text-2xl font-serif text-w-dark border-b border-w-ghost hover:pl-2 hover:text-w-forest transition-all"
               >
                 {link.label}
               </Link>
             ))}
             {isAdmin && (
-              <Link href="/admin" onClick={() => setMenuOpen(false)} className="py-4 text-2xl font-serif border-b border-gray-100 text-gray-500">
+              <Link href="/admin" onClick={() => setMenuOpen(false)} className="py-4 text-2xl font-serif border-b border-w-ghost text-w-graphite">
                 Admin Panel
               </Link>
             )}
           </nav>
           <div className="p-6 flex gap-4">
-            <Link href={profile ? '/account' : '/login'} onClick={() => setMenuOpen(false)} className="flex-1 text-center py-3 border border-[#0A0A0A] text-sm uppercase tracking-widest">
+            <Link href={profile ? '/account' : '/login'} onClick={() => setMenuOpen(false)} className="flex-1 text-center py-3 border border-w-dark text-w-dark text-sm uppercase tracking-widest hover:bg-w-dark hover:text-white transition-colors rounded-none">
               {profile ? 'My Account' : 'Login'}
             </Link>
             {!profile && (
-              <Link href="/signup" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-3 bg-[#0A0A0A] text-white text-sm uppercase tracking-widest">
+              <Link href="/signup" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-3 bg-w-forest text-white text-sm uppercase tracking-widest hover:bg-w-emerald transition-colors rounded-none">
                 Sign Up
               </Link>
             )}
