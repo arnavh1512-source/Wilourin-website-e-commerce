@@ -11,7 +11,7 @@ export async function GET() {
   if (!adminRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [{ data: profiles, error }, { data: orders }] = await Promise.all([
-    supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, full_name, phone, avatar_url, loyalty_points, loyalty_tier, created_at').order('created_at', { ascending: false }),
     supabase.from('orders').select('user_id, total').eq('payment_status', 'Paid').not('user_id', 'is', null),
   ])
 

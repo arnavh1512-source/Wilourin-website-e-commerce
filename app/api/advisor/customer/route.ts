@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
 
@@ -15,6 +16,11 @@ export async function POST(req: NextRequest) {
   // 20 requests per 15 minutes per IP
   const { allowed, retryAfterMs } = checkRateLimit(`adv-c:${getIP(req)}`, 20, 15 * 60 * 1000)
   if (!allowed) return tooManyRequests(retryAfterMs)
+
+  // Require authenticated session — route is unused on storefront but kept for future use
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const body = await req.json()

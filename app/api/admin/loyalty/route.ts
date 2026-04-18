@@ -1,5 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const patchSchema = z.object({
+  loyalty_points_per_rupee: z.number().min(0).max(100),
+})
 
 async function getAdminSupabase() {
   const supabase = await createClient()
@@ -30,11 +35,12 @@ export async function PATCH(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { loyalty_points_per_rupee } = body
+  const parsed = patchSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   const { error: dbError } = await supabase!
     .from('store_settings')
-    .update({ loyalty_points_per_rupee })
+    .update({ loyalty_points_per_rupee: parsed.data.loyalty_points_per_rupee })
     .eq('id', 1)
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })

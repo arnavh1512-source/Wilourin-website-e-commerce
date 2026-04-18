@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     // Send welcome email via Resend (non-blocking)
     if (process.env.RESEND_API_KEY) {
       const { Resend } = await import('resend')
+      const welcomeCode = process.env.NEWSLETTER_WELCOME_CODE ?? 'WELCOME10'
       const resend = new Resend(process.env.RESEND_API_KEY)
       resend.emails.send({
         from: 'Wilourin <hello@wilourin.com>',
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
               You're officially part of the movement. As a welcome gift, here's 10% off your first order.
             </p>
             <div style="background:#0A0A0A;color:#fff;padding:16px;text-align:center;font-size:22px;letter-spacing:4px;margin:0 0 24px;">
-              WELCOME10
+              ${welcomeCode}
             </div>
             <p style="color:#888;font-size:12px;">Valid on your first order. No minimum purchase required.</p>
             <a href="${process.env.NEXT_PUBLIC_SITE_URL}/products" style="display:inline-block;background:#0A0A0A;color:#fff;text-decoration:none;padding:12px 32px;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:16px;">Shop Now</a>

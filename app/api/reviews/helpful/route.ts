@@ -3,6 +3,13 @@ import { z } from 'zod'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
 
+// Run this once in Supabase SQL editor:
+// CREATE OR REPLACE FUNCTION increment_review_helpful(review_id uuid)
+// RETURNS int LANGUAGE sql AS $$
+//   UPDATE reviews SET helpful_count = helpful_count + 1
+//   WHERE id = review_id RETURNING helpful_count;
+// $$;
+
 function createAdminClient() {
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +21,6 @@ function createAdminClient() {
 const schema = z.object({ reviewId: z.string().uuid() })
 
 export async function POST(req: NextRequest) {
-  // 20 helpful votes per 15 minutes per IP
   const { allowed, retryAfterMs } = checkRateLimit(`rv:${getIP(req)}`, 20, 15 * 60 * 1000)
   if (!allowed) return tooManyRequests(retryAfterMs)
 
@@ -25,22 +31,18 @@ export async function POST(req: NextRequest) {
     const { reviewId } = parsed.data
 
     const admin = createAdminClient()
-    const { data: review } = await admin
-      .from('reviews')
-      .select('helpful_count')
-      .eq('id', reviewId)
-      .single()
 
-    if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 })
+    // Atomic increment via RPC — avoids read-modify-write race condition
+    const { data: newCount, error } = await admin.rpc('increment_review_helpful', { review_id: reviewId })
 
-    const { error } = await admin
-      .from('reviews')
-      .update({ helpful_count: review.helpful_count + 1 })
-      .eq('id', reviewId)
+    if (error) {
+      console.error('[reviews/helpful] rpc error:', error.message)
+      return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
+    }
 
-    if (error) return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
+    if (newCount === null) return NextResponse.json({ error: 'Review not found' }, { status: 404 })
 
-    return NextResponse.json({ success: true, count: review.helpful_count + 1 })
+    return NextResponse.json({ success: true, count: newCount })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

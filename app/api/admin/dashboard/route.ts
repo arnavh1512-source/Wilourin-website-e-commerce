@@ -15,24 +15,25 @@ export async function GET() {
   const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
 
   const [
-    { data: paidOrders },
+    { data: allPaidOrders },
     { data: thisMonthOrders },
     { data: lastMonthOrders },
     { data: allOrders },
-    { data: customers },
+    { count: totalCustomers },
     { data: lowStock },
     { data: recentOrders },
   ] = await Promise.all([
-    supabase.from('orders').select('total').eq('payment_status', 'Paid'),
-    supabase.from('orders').select('total, id').eq('payment_status', 'Paid').gte('created_at', firstOfMonth),
-    supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth),
-    supabase.from('orders').select('order_status'),
-    supabase.from('profiles').select('id'),
-    supabase.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0),
-    supabase.from('orders').select('*, order_items(product_name, quantity)').order('created_at', { ascending: false }).limit(5),
+    // Capped at 10 000 rows for revenue sum — use RPC for larger stores
+    supabase.from('orders').select('total').eq('payment_status', 'Paid').limit(10000),
+    supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfMonth).limit(10000),
+    supabase.from('orders').select('total').eq('payment_status', 'Paid').gte('created_at', firstOfLastMonth).lt('created_at', firstOfMonth).limit(10000),
+    supabase.from('orders').select('order_status').limit(10000),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('product_variants').select('product_id, size, stock_qty, products(name)').lt('stock_qty', 5).gt('stock_qty', 0).limit(100),
+    supabase.from('orders').select('id, order_number, order_status, total, created_at, guest_email, order_items(product_name, quantity)').order('created_at', { ascending: false }).limit(5),
   ])
 
-  const totalRevenue = (paidOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
+  const totalRevenue = (allPaidOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
   const thisMonthRevenue = (thisMonthOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
   const lastMonthRevenue = (lastMonthOrders ?? []).reduce((s: number, o: any) => s + Number(o.total), 0)
 
@@ -47,7 +48,7 @@ export async function GET() {
     lastMonthRevenue: Math.round(lastMonthRevenue),
     totalOrders: (allOrders ?? []).length,
     thisMonthOrders: (thisMonthOrders ?? []).length,
-    totalCustomers: (customers ?? []).length,
+    totalCustomers: totalCustomers ?? 0,
     pendingOrders: statusCounts['Confirmed'] ?? 0,
     lowStockCount: (lowStock ?? []).length,
     recentOrders: recentOrders ?? [],

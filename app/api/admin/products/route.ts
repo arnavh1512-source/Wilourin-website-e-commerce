@@ -1,5 +1,48 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const PRODUCT_STATUSES = ['Draft', 'Published', 'Archived'] as const
+const BADGE_VALUES = ['New', 'Sale', 'Hot', 'Limited', null] as const
+
+const productSchema = z.object({
+  name: z.string().min(1).max(300),
+  slug: z.string().min(1).max(300).regex(/^[a-z0-9-]+$/),
+  description: z.string().max(10000).optional().nullable(),
+  price: z.number().positive(),
+  original_price: z.number().positive().optional().nullable(),
+  status: z.enum(PRODUCT_STATUSES),
+  badge: z.enum(['New', 'Sale', 'Hot', 'Limited']).optional().nullable(),
+  category_id: z.string().uuid().optional().nullable(),
+  tags: z.array(z.string().max(50)).max(20).optional().nullable(),
+  care_instructions: z.string().max(2000).optional().nullable(),
+  material: z.string().max(500).optional().nullable(),
+  fit: z.string().max(200).optional().nullable(),
+})
+
+const variantSchema = z.object({
+  size: z.string().max(20),
+  color_name: z.string().max(100).optional().nullable(),
+  stock_qty: z.number().int().min(0),
+})
+
+const imageSchema = z.object({
+  url: z.string().url().max(2000),
+  isPrimary: z.boolean(),
+})
+
+const postSchema = z.object({
+  productData: productSchema,
+  variants: z.array(variantSchema).max(50).optional(),
+  images: z.array(imageSchema).max(20).optional(),
+})
+
+const putSchema = z.object({
+  id: z.string().uuid(),
+  productData: productSchema.partial(),
+  variants: z.array(variantSchema).max(50).optional(),
+  images: z.array(imageSchema).max(20).optional(),
+})
 
 async function getAdminSupabase() {
   const supabase = await createClient()
@@ -28,7 +71,10 @@ export async function POST(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { productData, variants, images } = body
+  const parsed = postSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
+  const { productData, variants, images } = parsed.data
 
   const { data: product, error: insertError } = await supabase!
     .from('products')
@@ -42,7 +88,7 @@ export async function POST(request: Request) {
 
   if (images?.length) {
     await supabase!.from('product_images').insert(
-      images.map((img: any, i: number) => ({
+      images.map((img, i) => ({
         product_id: productId,
         image_url: img.url,
         is_primary: img.isPrimary,
@@ -53,11 +99,11 @@ export async function POST(request: Request) {
 
   if (variants?.length) {
     await supabase!.from('product_variants').insert(
-      variants.map((v: any) => ({
+      variants.map((v) => ({
         product_id: productId,
         size: v.size,
         color_name: v.color_name,
-        stock_qty: Number(v.stock_qty),
+        stock_qty: v.stock_qty,
       }))
     )
   }
@@ -70,7 +116,10 @@ export async function PUT(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { id, productData, variants, images } = body
+  const parsed = putSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
+  const { id, productData, variants, images } = parsed.data
 
   await supabase!.from('products').update(productData).eq('id', id)
 
@@ -78,7 +127,7 @@ export async function PUT(request: Request) {
     await supabase!.from('product_images').delete().eq('product_id', id)
     if (images.length) {
       await supabase!.from('product_images').insert(
-        images.map((img: any, i: number) => ({
+        images.map((img, i) => ({
           product_id: id,
           image_url: img.url,
           is_primary: img.isPrimary,
@@ -92,11 +141,11 @@ export async function PUT(request: Request) {
     await supabase!.from('product_variants').delete().eq('product_id', id)
     if (variants.length) {
       await supabase!.from('product_variants').insert(
-        variants.map((v: any) => ({
+        variants.map((v) => ({
           product_id: id,
           size: v.size,
           color_name: v.color_name,
-          stock_qty: Number(v.stock_qty),
+          stock_qty: v.stock_qty,
         }))
       )
     }

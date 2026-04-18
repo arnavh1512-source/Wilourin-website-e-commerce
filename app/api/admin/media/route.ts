@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const safeFilename = z.string().regex(/^[\w.\-]+$/).max(200)
 
 async function getAdminSupabase() {
   const supabase = await createClient()
@@ -16,7 +19,7 @@ export async function GET() {
 
   const { data, error: storageError } = await supabase!.storage
     .from('product-images')
-    .list('', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
+    .list('', { limit: 500, sortBy: { column: 'created_at', order: 'desc' } })
 
   if (storageError) return NextResponse.json({ error: storageError.message }, { status: 500 })
 
@@ -35,10 +38,10 @@ export async function DELETE(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { name } = body
-  if (!name) return NextResponse.json({ error: 'Missing name' }, { status: 400 })
+  const parsed = safeFilename.safeParse(body?.name)
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid filename' }, { status: 400 })
 
-  const { error: storageError } = await supabase!.storage.from('product-images').remove([name])
+  const { error: storageError } = await supabase!.storage.from('product-images').remove([parsed.data])
   if (storageError) return NextResponse.json({ error: storageError.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

@@ -74,7 +74,11 @@ export async function POST(req: NextRequest) {
       discountAmount = 0 // handled separately in checkout
     }
 
-    return NextResponse.json({ valid: true, code: discount, discountAmount })
+    return NextResponse.json({
+      valid: true,
+      code: { code: discount.code, type: discount.type, value: discount.value },
+      discountAmount,
+    })
   } catch (error) {
     return NextResponse.json({ valid: false, message: 'Server error' }, { status: 500 })
   }
