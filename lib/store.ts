@@ -108,13 +108,15 @@ interface UIStore {
   isCartOpen: boolean
   isMenuOpen: boolean
   isSearchOpen: boolean
-  isAdvisorOpen: boolean
   isHelpOpen: boolean
+  /** @deprecated advisor removed from storefront */
+  isAdvisorOpen: boolean
   toggleCart: () => void
   toggleMenu: () => void
   toggleSearch: () => void
-  toggleAdvisor: () => void
   toggleHelp: () => void
+  /** @deprecated advisor removed from storefront */
+  toggleAdvisor: () => void
   closeAll: () => void
   setCartOpen: (open: boolean) => void
 }
@@ -123,15 +125,15 @@ export const useUIStore = create<UIStore>((set) => ({
   isCartOpen: false,
   isMenuOpen: false,
   isSearchOpen: false,
-  isAdvisorOpen: false,
   isHelpOpen: false,
+  isAdvisorOpen: false,
 
   toggleCart: () => set((s) => ({ isCartOpen: !s.isCartOpen, isMenuOpen: false, isSearchOpen: false })),
   toggleMenu: () => set((s) => ({ isMenuOpen: !s.isMenuOpen, isCartOpen: false, isSearchOpen: false })),
   toggleSearch: () => set((s) => ({ isSearchOpen: !s.isSearchOpen, isMenuOpen: false })),
-  toggleAdvisor: () => set((s) => ({ isAdvisorOpen: !s.isAdvisorOpen })),
   toggleHelp: () => set((s) => ({ isHelpOpen: !s.isHelpOpen })),
-  closeAll: () => set({ isCartOpen: false, isMenuOpen: false, isSearchOpen: false, isAdvisorOpen: false, isHelpOpen: false }),
+  toggleAdvisor: () => set((s) => ({ isAdvisorOpen: !s.isAdvisorOpen })),
+  closeAll: () => set({ isCartOpen: false, isMenuOpen: false, isSearchOpen: false, isHelpOpen: false, isAdvisorOpen: false }),
   setCartOpen: (open) => set({ isCartOpen: open }),
 }))
 
@@ -190,7 +192,9 @@ export const useRecentlyViewedStore = create<RecentlyViewedStore>()(
       items: [],
 
       addItem: (item) => set((state) => {
-        const filtered = state.items.filter((i) => i.id !== item.id)
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+        const filtered = state.items
+          .filter((i) => i.id !== item.id && i.viewed_at > thirtyDaysAgo)
         const updated = [{ ...item, viewed_at: Date.now() }, ...filtered].slice(0, 6)
         return { items: updated }
       }),
@@ -214,7 +218,7 @@ export const useToastStore = create<ToastStore>((set) => ({
   toasts: [],
 
   addToast: (message, type = 'success', duration = 3000) => {
-    const id = Math.random().toString(36).slice(2)
+    const id = crypto.randomUUID()
     set((state) => ({ toasts: [...state.toasts, { id, message, type, duration }] }))
     setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))

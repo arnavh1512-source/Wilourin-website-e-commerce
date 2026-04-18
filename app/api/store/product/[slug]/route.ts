@@ -9,16 +9,24 @@ export async function GET(
 
   const { data: product, error } = await supabase
     .from('products')
-    .select(`*, product_images(*), product_variants(*), categories(id, name, slug)`)
+    .select(`
+      id, name, slug, description, price, original_price, badge,
+      fit_note, model_height, model_size, meta_title, meta_description,
+      tags, status, is_featured, category_id, created_at,
+      product_images(id, image_url, display_order, is_primary),
+      product_variants(id, size, color_name, color_hex, stock_qty, sku),
+      categories(id, name, slug)
+    `)
     .eq('slug', params.slug)
     .eq('status', 'Published')
     .single()
 
   if (error || !product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  // Scope reviews — exclude user_id (PII)
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*')
+    .select('id, reviewer_name, rating, review_text, size_purchased, is_verified, helpful_count, created_at')
     .eq('product_id', product.id)
     .order('created_at', { ascending: false })
 

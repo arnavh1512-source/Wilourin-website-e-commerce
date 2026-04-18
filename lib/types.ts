@@ -44,8 +44,6 @@ export interface Profile {
   avatar_url: string | null
   loyalty_points: number
   loyalty_tier: 'Bronze' | 'Silver' | 'Gold'
-  referral_code: string | null
-  referred_by: string | null
   created_at: string
   updated_at: string
 }
@@ -362,7 +360,7 @@ export interface PaytmVerifyPayload {
 
 export interface DiscountValidateResponse {
   valid: boolean
-  code?: DiscountCode
+  code?: { code: string; type: DiscountCode['type']; value: number }
   discountAmount?: number
   message?: string
 }

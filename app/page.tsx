@@ -26,7 +26,7 @@ export default async function HomePage() {
     settings = settingsRes.data
     rawCategories = categoriesRes.data
     lookbook = lookbookRes.data
-  } catch {}
+  } catch (e) { console.error('[homepage] data fetch error:', e) }
 
   // Fetch featured products
   const featuredIds = (settings?.featured_product_ids as string[]) ?? []
@@ -57,7 +57,7 @@ export default async function HomePage() {
         images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
       }))
     }
-  } catch {}
+  } catch (e) { console.error('[homepage] featured products error:', e) }
 
   return (
     <>

@@ -17,9 +17,10 @@
 
 ## DATA FETCHING RULES
 - Never call Supabase directly from browser/client components
-- All Supabase calls must go through /api/* routes
-- Every new feature needs a new API route in app/api/
-- Client components only call fetch('/api/...')
+- **Server components (app/*.tsx without 'use client') MAY call Supabase directly** — they run server-side and are safe
+- Client components ('use client') must ONLY call fetch('/api/...')
+- All Supabase calls from client components must go through /api/* routes
+- Every new feature that needs client-side data needs a new API route in app/api/
 
 ## WHEN ADDING NEW FEATURES
 - Create the API route first

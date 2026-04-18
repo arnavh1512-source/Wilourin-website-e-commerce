@@ -55,7 +55,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   else if (sort === 'price_desc') query = query.order('price', { ascending: false })
   else query = query.order('created_at', { ascending: false })
 
-  const { data: products } = await query.limit(48)
+  const { data: products } = await query.limit(200)
 
   // Size filter post-query (requires variant join)
   let filteredProducts = products ?? []

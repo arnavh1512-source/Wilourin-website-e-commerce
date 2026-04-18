@@ -1,5 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const sizeGuideSchema = z.object({
+  name: z.string().min(1).max(200),
+  category_id: z.string().uuid().optional().nullable(),
+  image_url: z.string().url().max(2000).optional().nullable(),
+  measurements: z.record(z.unknown()).optional().nullable(),
+})
+
+const updateSchema = sizeGuideSchema.partial().extend({ id: z.string().uuid() })
 
 async function getAdminSupabase() {
   const supabase = await createClient()
@@ -28,7 +38,10 @@ export async function POST(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { data, error: dbError } = await supabase!.from('size_guides').insert(body).select().single()
+  const parsed = sizeGuideSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
+  const { data, error: dbError } = await supabase!.from('size_guides').insert(parsed.data).select().single()
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
   return NextResponse.json(data)
 }
@@ -38,9 +51,10 @@ export async function PUT(request: Request) {
   if (error) return error
 
   const body = await request.json()
-  const { id, ...data } = body
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const parsed = updateSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
+  const { id, ...data } = parsed.data
   const { error: dbError } = await supabase!.from('size_guides').update(data).eq('id', id)
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
   return NextResponse.json({ success: true })
