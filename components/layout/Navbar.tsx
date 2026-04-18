@@ -25,7 +25,7 @@ const TIER_COLORS: Record<string, string> = {
 
 export function Navbar() {
   const pathname = usePathname()
-  const [scrolled, setScrolled] = useState(false)
+  const [_scrolled, setScrolled] = useState(false)
   const [announcement, setAnnouncement] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -73,19 +73,11 @@ export function Navbar() {
   const isAdminRoute = pathname.startsWith('/admin')
   if (isAdminRoute) return null
 
-  const isHome = pathname === '/'
-  const transparent = isHome && !scrolled
-
   return (
     <>
       <AnnouncementBar text={announcement ?? (detectedCity ? `Delivering to ${detectedCity}` : null)} />
       <header
-        className={cn(
-          'sticky top-0 z-50 w-full transition-all duration-300',
-          transparent
-            ? 'bg-transparent'
-            : 'bg-w-bg border-b border-w-ghost shadow-sm'
-        )}
+        className="sticky top-0 z-50 w-full transition-all duration-300 bg-w-dark border-b border-white/10"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -98,10 +90,8 @@ export function Navbar() {
                   className={cn(
                     'font-sans text-sm tracking-wide transition-colors duration-200',
                     pathname === link.href
-                      ? 'text-w-forest border-b border-w-forest'
-                      : transparent
-                        ? 'text-white hover:text-white/70'
-                        : 'text-w-dark hover:text-w-forest'
+                      ? 'text-w-emerald border-b border-w-emerald'
+                      : 'text-white/80 hover:text-white'
                   )}
                 >
                   {link.label}
@@ -111,7 +101,7 @@ export function Navbar() {
 
             {/* Mobile — hamburger */}
             <button
-              className={cn('lg:hidden p-2 transition-colors', transparent ? 'text-white' : 'text-w-dark hover:text-w-forest')}
+              className="lg:hidden p-2 text-white/80 hover:text-white transition-colors"
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -121,10 +111,7 @@ export function Navbar() {
             {/* Center — Logo */}
             <Link
               href="/"
-              className={cn(
-                'absolute left-1/2 -translate-x-1/2 font-serif text-2xl tracking-[0.15em] uppercase transition-colors',
-                transparent ? 'text-white' : 'text-w-dark'
-              )}
+              className="absolute left-1/2 -translate-x-1/2 font-serif text-2xl tracking-[0.15em] uppercase text-white"
             >
               Wilourin
             </Link>
@@ -134,13 +121,13 @@ export function Navbar() {
               <button
                 onClick={toggleSearch}
                 aria-label="Search"
-                className={cn('transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                className="text-white/80 hover:text-white transition-colors"
               >
                 <Search size={20} />
               </button>
               <Link
                 href="/wishlist"
-                className={cn('relative transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                className="relative text-white/80 hover:text-white transition-colors"
                 aria-label="Wishlist"
               >
                 <Heart size={20} />
@@ -152,7 +139,7 @@ export function Navbar() {
               </Link>
               <button
                 onClick={uiToggleCart}
-                className={cn('relative transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                className="relative text-white/80 hover:text-white transition-colors"
                 aria-label="Cart"
               >
                 <ShoppingBag size={20} />
@@ -164,7 +151,7 @@ export function Navbar() {
               </button>
               <Link
                 href={profile ? '/account' : '/login'}
-                className={cn('relative transition-colors', transparent ? 'text-white hover:text-white/70' : 'text-w-dark hover:text-w-forest')}
+                className="relative text-white/80 hover:text-white transition-colors"
                 aria-label="Account"
               >
                 <User size={20} />
@@ -175,7 +162,7 @@ export function Navbar() {
                 )}
               </Link>
               {isAdmin && (
-                <Link href="/admin" className="hidden lg:block font-sans text-xs uppercase tracking-widest text-w-graphite hover:text-w-dark transition-colors">
+                <Link href="/admin" className="hidden lg:block font-sans text-xs uppercase tracking-widest text-white/50 hover:text-white transition-colors">
                   Admin
                 </Link>
               )}

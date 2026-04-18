@@ -65,10 +65,13 @@ h1, h2, h3 {
 }
 
 /* Splash letter animation */
-@layer utilities {
-  .splash-letter {
-    opacity: 0;
-    display: inline-block;
-    animation: letterIn 0.5s ease-out forwards;
-  }
+@keyframes splashLetterIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.splash-letter {
+  opacity: 0;
+  display: inline-block;
+  animation: splashLetterIn 0.5s ease-out forwards;
 }

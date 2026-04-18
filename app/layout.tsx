@@ -7,7 +7,6 @@ import { ToastContainer } from '@/components/ui/ToastContainer'
 import { CookieBanner } from '@/components/ui/CookieBanner'
 import { CartDrawer } from '@/components/drawers/CartDrawer'
 import { HelpDrawer } from '@/components/drawers/HelpDrawer'
-import { SplashScreen } from '@/components/SplashScreen'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +29,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className="bg-w-bg text-w-dark antialiased">
         <Providers>
-          <SplashScreen />
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <Footer />

@@ -1,3 +1,4 @@
+import SplashScreen from '@/components/SplashScreen'
 import { createClient } from '@/lib/supabase/server'
 import { Hero } from '@/components/sections/Hero'
 import { CategoryTiles } from '@/components/sections/CategoryTiles'
@@ -57,6 +58,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <SplashScreen />
       <Hero
         headline={(settings?.hero_headline as string) ?? null}
         subtext={(settings?.hero_subtext as string) ?? null}
