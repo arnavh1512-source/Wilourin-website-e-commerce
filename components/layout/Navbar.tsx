@@ -73,11 +73,17 @@ export function Navbar() {
   const isAdminRoute = pathname.startsWith('/admin')
   if (isAdminRoute) return null
 
+  const isHome = pathname === '/'
+  const dark = isHome  // dark navbar only on homepage
+
   return (
     <>
       <AnnouncementBar text={announcement ?? (detectedCity ? `Delivering to ${detectedCity}` : null)} />
       <header
-        className="sticky top-0 z-50 w-full transition-all duration-300 bg-w-dark border-b border-white/10"
+        className={cn(
+          'sticky top-0 z-50 w-full transition-all duration-300',
+          dark ? 'bg-w-dark border-b border-white/10' : 'bg-w-bg border-b border-w-ghost shadow-sm'
+        )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -90,8 +96,8 @@ export function Navbar() {
                   className={cn(
                     'font-sans text-sm tracking-wide transition-colors duration-200',
                     pathname === link.href
-                      ? 'text-w-emerald border-b border-w-emerald'
-                      : 'text-white/80 hover:text-white'
+                      ? (dark ? 'text-w-emerald border-b border-w-emerald' : 'text-w-forest border-b border-w-forest')
+                      : (dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')
                   )}
                 >
                   {link.label}
@@ -101,7 +107,7 @@ export function Navbar() {
 
             {/* Mobile — hamburger */}
             <button
-              className="lg:hidden p-2 text-white/80 hover:text-white transition-colors"
+              className={cn('lg:hidden p-2 transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -111,7 +117,7 @@ export function Navbar() {
             {/* Center — Logo */}
             <Link
               href="/"
-              className="absolute left-1/2 -translate-x-1/2 font-serif text-2xl tracking-[0.15em] uppercase text-white"
+              className={cn('absolute left-1/2 -translate-x-1/2 font-serif text-2xl tracking-[0.15em] uppercase', dark ? 'text-white' : 'text-w-dark')}
             >
               Wilourin
             </Link>
@@ -121,13 +127,13 @@ export function Navbar() {
               <button
                 onClick={toggleSearch}
                 aria-label="Search"
-                className="text-white/80 hover:text-white transition-colors"
+                className={cn('transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
               >
                 <Search size={20} />
               </button>
               <Link
                 href="/wishlist"
-                className="relative text-white/80 hover:text-white transition-colors"
+                className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
                 aria-label="Wishlist"
               >
                 <Heart size={20} />
@@ -139,7 +145,7 @@ export function Navbar() {
               </Link>
               <button
                 onClick={uiToggleCart}
-                className="relative text-white/80 hover:text-white transition-colors"
+                className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
                 aria-label="Cart"
               >
                 <ShoppingBag size={20} />
@@ -151,7 +157,7 @@ export function Navbar() {
               </button>
               <Link
                 href={profile ? '/account' : '/login'}
-                className="relative text-white/80 hover:text-white transition-colors"
+                className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
                 aria-label="Account"
               >
                 <User size={20} />
@@ -162,7 +168,7 @@ export function Navbar() {
                 )}
               </Link>
               {isAdmin && (
-                <Link href="/admin" className="hidden lg:block font-sans text-xs uppercase tracking-widest text-white/50 hover:text-white transition-colors">
+                <Link href="/admin" className={cn('hidden lg:block font-sans text-xs uppercase tracking-widest transition-colors', dark ? 'text-white/50 hover:text-white' : 'text-w-graphite hover:text-w-dark')}>
                   Admin
                 </Link>
               )}
