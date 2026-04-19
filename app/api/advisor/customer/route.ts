@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       admin.from('categories').select('name, slug').order('name'),
     ])
 
-    const productContext = (products as ProductRow[] ?? []).map((p) => ({
+    const productContext = ((products ?? []) as unknown as ProductRow[]).map((p) => ({
       name: p.name,
       price: p.price,
       original_price: p.original_price,
