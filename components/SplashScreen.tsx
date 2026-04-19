@@ -2,68 +2,86 @@
 
 import { useEffect, useState } from 'react'
 
-const LETTERS = ['W', 'I', 'L', 'O', 'U', 'R', 'I', 'N']
-
 export default function SplashScreen() {
   const [visible, setVisible] = useState(false)
-  const [phase, setPhase] = useState<'idle' | 'inflate' | 'explode' | 'exit'>('idle')
+  const [started, setStarted] = useState(false)
 
   useEffect(() => {
     if (sessionStorage.getItem('splashShown')) return
     setVisible(true)
-    const t1 = setTimeout(() => setPhase('inflate'), 50)
-    const t2 = setTimeout(() => setPhase('explode'), 1300)
-    const t3 = setTimeout(() => setPhase('exit'), 2300)
-    const t4 = setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setStarted(true)))
+    const t = setTimeout(() => {
       setVisible(false)
       sessionStorage.setItem('splashShown', 'true')
-    }, 2800)
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4) }
+    }, 3800)
+    return () => clearTimeout(t)
   }, [])
 
   if (!visible) return null
 
-  const groupScale = phase === 'exit' ? 3 : phase === 'explode' ? 2.5 : phase === 'inflate' ? 1.8 : 1
-  const groupOpacity = phase === 'exit' ? 0 : 1
-
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-label={phase === 'exit' ? 'Wilourin loaded' : 'Loading Wilourin'}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: '#292929',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: phase === 'exit' ? 0 : 1,
-        transition: phase === 'exit' ? 'opacity 500ms ease' : 'none',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: phase === 'explode' ? '12px' : phase === 'inflate' ? '8px' : '4px',
-          transform: `scale(${groupScale})`,
-          opacity: groupOpacity,
-          transition: phase === 'exit'
-            ? 'transform 500ms ease, opacity 500ms ease'
-            : phase === 'explode'
-            ? 'transform 960ms cubic-bezier(0,0.61416,0,1), gap 960ms ease'
-            : phase === 'inflate'
-            ? 'transform 1230ms cubic-bezier(0.34,1.56,0.64,1), gap 800ms ease'
-            : 'none',
-        }}
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: '#292929',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden',
+    }}>
+      <svg
+        viewBox="0 0 820 200"
+        style={{ width: '90vw', maxWidth: 820, overflow: 'visible' }}
       >
-        {LETTERS.map((letter, i) => (
-          <InflateLetter key={i} letter={letter} phase={phase} delay={i * 80} />
-        ))}
-      </div>
+        <style>{`
+          .ltr {
+            fill: #FBFE40;
+            stroke: #292929;
+            stroke-width: 3;
+            opacity: ${started ? 1 : 0};
+          }
+          @keyframes morphInflate {
+            0%   { transform: scale(1);    opacity: 1; }
+            40%  { transform: scale(1.18); opacity: 1; }
+            55%  { transform: scale(1.12); opacity: 1; }
+            75%  { transform: scale(2.4);  opacity: 1; }
+            88%  { transform: scale(2.35); opacity: 1; }
+            100% { transform: scale(2.5);  opacity: 0; }
+          }
+          ${started ? `
+          .ltr { animation: morphInflate 2.6s cubic-bezier(0.34,1.4,0.64,1) forwards; }
+          .l0 { animation-delay: 0.05s; transform-origin: 40px 100px; }
+          .l1 { animation-delay: 0.18s; transform-origin: 137px 100px; }
+          .l2 { animation-delay: 0.31s; transform-origin: 188px 100px; }
+          .l3 { animation-delay: 0.44s; transform-origin: 316px 100px; }
+          .l4 { animation-delay: 0.57s; transform-origin: 418px 100px; }
+          .l5 { animation-delay: 0.70s; transform-origin: 503px 100px; }
+          .l6 { animation-delay: 0.83s; transform-origin: 567px 100px; }
+          .l7 { animation-delay: 0.96s; transform-origin: 637px 100px; }
+          ` : ''}
+        `}</style>
+
+        {/* W */}
+        <path className="ltr l0" d="M35 57 L52 137 L70 92 L88 137 L105 57 L115 57 L92 145 L70 100 L48 145 L25 57 Z" />
+
+        {/* I */}
+        <path className="ltr l1" d="M130 57 L144 57 L144 142 L130 142 Z" />
+
+        {/* L */}
+        <path className="ltr l2" d="M158 57 L172 57 L172 129 L218 129 L218 142 L158 142 Z" />
+
+        {/* O */}
+        <path className="ltr l3" fillRule="evenodd" d="M274 57 C297 57 316 76 316 99 C316 122 297 141 274 141 C251 141 232 122 232 99 C232 76 251 57 274 57 Z M274 71 C259 71 246 84 246 99 C246 114 259 127 274 127 C289 127 302 114 302 99 C302 84 289 71 274 71 Z" />
+
+        {/* U */}
+        <path className="ltr l4" d="M340 57 L354 57 L354 109 C354 123 364 133 378 133 C392 133 402 123 402 109 L402 57 L416 57 L416 109 C416 131 399 147 378 147 C357 147 340 131 340 109 Z" />
+
+        {/* R */}
+        <path className="ltr l5" fillRule="evenodd" d="M436 57 L450 57 L450 142 L436 142 Z M436 57 L472 57 C488 57 500 69 500 85 C500 99 490 109 476 111 L502 142 L484 142 L460 112 L450 112 L450 142 L436 142 Z M450 71 L450 99 L472 99 C480 99 486 93 486 85 C486 77 480 71 472 71 Z" />
+
+        {/* I */}
+        <path className="ltr l6" d="M520 57 L534 57 L534 142 L520 142 Z" />
+
+        {/* N */}
+        <path className="ltr l7" d="M548 57 L562 57 L612 119 L612 57 L626 57 L626 142 L612 142 L562 80 L562 142 L548 142 Z" />
+      </svg>
 
       <button
         onClick={() => {
@@ -71,102 +89,15 @@ export default function SplashScreen() {
           sessionStorage.setItem('splashShown', 'true')
         }}
         style={{
-          position: 'absolute',
-          bottom: 32,
-          right: 32,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'rgba(255,255,255,0.35)',
-          fontSize: 11,
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
+          position: 'absolute', bottom: 32, right: 32,
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'rgba(255,255,255,0.35)', fontSize: 11,
+          letterSpacing: '0.2em', textTransform: 'uppercase',
           fontFamily: 'Inter, sans-serif',
         }}
       >
         SKIP
       </button>
-    </div>
-  )
-}
-
-function InflateLetter({
-  letter,
-  phase,
-  delay,
-}: {
-  letter: string
-  phase: string
-  delay: number
-}) {
-  const [localPhase, setLocalPhase] = useState<'hidden' | 'normal' | 'inflate' | 'explode'>('hidden')
-
-  useEffect(() => {
-    if (phase === 'idle') return
-    const timers: ReturnType<typeof setTimeout>[] = []
-    if (phase === 'inflate') {
-      timers.push(setTimeout(() => setLocalPhase('normal'), delay))
-      timers.push(setTimeout(() => setLocalPhase('inflate'), delay + 200))
-    }
-    if (phase === 'explode') {
-      timers.push(setTimeout(() => setLocalPhase('explode'), delay))
-    }
-    return () => timers.forEach(clearTimeout)
-  }, [phase, delay])
-
-  const scale =
-    localPhase === 'explode' ? 1.15
-    : localPhase === 'inflate' ? 1.08
-    : localPhase === 'normal' ? 1
-    : 0.6
-
-  const borderRadius =
-    localPhase === 'explode' ? '30%'
-    : localPhase === 'inflate' ? '20%'
-    : '4px'
-
-  const width =
-    letter === 'I' ? 28
-    : letter === 'W' || letter === 'M' ? 58
-    : 44
-
-  return (
-    <div
-      style={{
-        width,
-        height: 64,
-        background: '#FBFE40',
-        borderRadius,
-        transform: `scale(${scale})`,
-        opacity: localPhase === 'hidden' ? 0 : 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        outline: '2px solid #292929',
-        outlineOffset: '-1px',
-        transition:
-          localPhase === 'explode'
-            ? 'transform 840ms cubic-bezier(0,0.61416,0,1), border-radius 840ms ease, opacity 200ms'
-            : localPhase === 'inflate'
-            ? 'transform 900ms cubic-bezier(0.34,1.56,0.64,1), border-radius 900ms ease'
-            : localPhase === 'normal'
-            ? 'transform 200ms ease, opacity 200ms ease'
-            : 'none',
-      }}
-    >
-      <span
-        style={{
-          fontFamily: 'Cormorant Garamond, serif',
-          fontSize: 36,
-          fontWeight: 600,
-          color: '#292929',
-          letterSpacing: '-0.02em',
-          lineHeight: 1,
-          userSelect: 'none',
-        }}
-      >
-        {letter}
-      </span>
     </div>
   )
 }
