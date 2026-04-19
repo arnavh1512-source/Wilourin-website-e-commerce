@@ -9,6 +9,10 @@ import { AnnouncementBar } from './AnnouncementBar'
 import { cn } from '@/lib/utils'
 import { detectCityByIP, getStoredCity, setStoredCity } from '@/lib/location'
 
+// L3: module-level cache — Navbar persists across soft navigations so these
+// fetch once per browser session rather than on every route change
+const _cache: { announcement?: string | null; city?: string; profile?: { full_name?: string; avatar_url?: string; loyalty_tier?: string } | null; isAdmin?: boolean } = {}
+
 const NAV_LINKS = [
   { label: 'Men', href: '/products?category=men' },
   { label: 'Women', href: '/products?category=women' },
@@ -49,34 +53,48 @@ export function Navbar() {
     })
   }, [pathname, searchParams])
 
-  // L2: fetch announcement first; only show city if announcement is absent
+  // L2 + L3: fetch announcement once, cache result, no city flash
   useEffect(() => {
+    if ('announcement' in _cache) {
+      setAnnouncement(_cache.announcement ?? null)
+      setAnnouncementReady(true)
+      return
+    }
     fetch('/api/store/homepage')
       .then((r) => r.json())
       .then((data) => {
-        setAnnouncement(data?.settings?.announcement_text ?? null)
+        const text = data?.settings?.announcement_text ?? null
+        _cache.announcement = text
+        setAnnouncement(text)
         setAnnouncementReady(true)
       })
-      .catch(() => setAnnouncementReady(true))
+      .catch(() => { _cache.announcement = null; setAnnouncementReady(true) })
   }, [])
 
   useEffect(() => {
+    if (_cache.city) { setDetectedCity(_cache.city); return }
     const stored = getStoredCity()
-    if (stored) { setDetectedCity(stored); return }
+    if (stored) { _cache.city = stored; setDetectedCity(stored); return }
     detectCityByIP()
-      .then((city) => { if (city) { setStoredCity(city); setDetectedCity(city) } })
+      .then((city) => { if (city) { _cache.city = city; setStoredCity(city); setDetectedCity(city) } })
       .catch(() => {})
   }, [])
 
   useEffect(() => {
+    if ('profile' in _cache) {
+      setProfile(_cache.profile ?? null)
+      setIsAdmin(_cache.isAdmin ?? false)
+      return
+    }
     fetch('/api/account/me')
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        if (!data) return
-        setProfile(data.profile)
-        setIsAdmin(data.isAdmin ?? false)
+        _cache.profile = data?.profile ?? null
+        _cache.isAdmin = data?.isAdmin ?? false
+        setProfile(_cache.profile ?? null)
+        setIsAdmin(_cache.isAdmin ?? false)
       })
-      .catch(() => {})
+      .catch(() => { _cache.profile = null; _cache.isAdmin = false })
   }, [])
 
   const isAdminRoute = pathname.startsWith('/admin')

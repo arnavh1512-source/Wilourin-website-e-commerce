@@ -7,12 +7,23 @@ interface AnnouncementBarProps {
   text: string | null
 }
 
+// M2: key includes a hash of the text so new announcements always show
+function textKey(text: string) {
+  let h = 0
+  for (let i = 0; i < text.length; i++) h = (Math.imul(31, h) + text.charCodeAt(i)) | 0
+  return `announcement-dismissed-${Math.abs(h)}`
+}
+
 export function AnnouncementBar({ text }: AnnouncementBarProps) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const dismissed = sessionStorage.getItem('announcement-dismissed')
-    if (!dismissed && text) setVisible(true)
+    if (!text) return
+    try {
+      if (!sessionStorage.getItem(textKey(text))) setVisible(true)
+    } catch {
+      setVisible(true)
+    }
   }, [text])
 
   if (!visible || !text) return null
@@ -23,7 +34,7 @@ export function AnnouncementBar({ text }: AnnouncementBarProps) {
       <button
         onClick={() => {
           setVisible(false)
-          sessionStorage.setItem('announcement-dismissed', '1')
+          try { sessionStorage.setItem(textKey(text), '1') } catch {}
         }}
         className="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
         aria-label="Dismiss announcement"

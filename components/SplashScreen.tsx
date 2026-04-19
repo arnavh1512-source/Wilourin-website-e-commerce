@@ -60,7 +60,7 @@ export default function SplashScreen() {
   const [linesIn, setLinesIn] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const didAnimate = useRef(false)
-  // H1: all timers in one ref so skip() can cancel them all
+  const skipped = useRef(false)                                      // L1: double-tap guard
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const clearAll = () => { timers.current.forEach(clearTimeout); timers.current = [] }
@@ -112,7 +112,8 @@ export default function SplashScreen() {
                 ],
                 { duration: 420, easing: 'ease-out', fill: 'forwards' }
               )
-              anim.onfinish = () => anim.cancel()
+              // M1: commit final opacity before cancelling to prevent single-frame snap
+              anim.onfinish = () => { dot.style.opacity = '0'; anim.cancel() }
             })
           }, i * 200 + 620)
         }, i * 200)
@@ -130,8 +131,9 @@ export default function SplashScreen() {
     return clearAll
   }, [visible])
 
-  // H1: skip cancels all pending timers before setting exit
   const skip = () => {
+    if (skipped.current) return   // L1: ignore double-tap
+    skipped.current = true
     clearAll()
     setPhase('exit')
     const id = setTimeout(() => {

@@ -8,7 +8,7 @@ import { CommunityFeed } from '@/components/sections/CommunityFeed'
 import { NewsletterStrip } from '@/components/sections/NewsletterStrip'
 import { TrustBadges } from '@/components/sections/TrustBadges'
 
-export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -54,7 +54,7 @@ export default async function HomePage() {
         images: (p.product_images as Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>) ?? [],
       }))
     }
-  } catch (e) { console.error('[homepage] featured products error:', e) }
+  } catch (e) { console.error('[homepage] featured products error:', e instanceof Error ? e.message : String(e)) }
 
   return (
     <>
