@@ -164,7 +164,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
   // Remove child records first — FK constraints block direct product deletion
   await supabase!.from('product_images').delete().eq('product_id', id)
