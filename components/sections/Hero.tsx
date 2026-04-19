@@ -18,7 +18,7 @@ interface HeroProps {
   imageUrl: string | null
 }
 
-export function Hero({ headline, subtext, imageUrl: _imageUrl }: HeroProps) {
+export function Hero({ headline, subtext, imageUrl }: HeroProps) {
   const [panelOpen, setPanelOpen] = useState(true)
   const [panelReady, setPanelReady] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -39,7 +39,10 @@ export function Hero({ headline, subtext, imageUrl: _imageUrl }: HeroProps) {
   return (
     <section
       className="relative w-full overflow-hidden bg-neutral-600"
-      style={{ height: '100vh' }}
+      style={{
+        height: '100vh',
+        ...(imageUrl ? { backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+      }}
     >
       {/* Video background — drop /hero.mp4 into /public when brand video is ready */}
       <video
@@ -50,11 +53,11 @@ export function Hero({ headline, subtext, imageUrl: _imageUrl }: HeroProps) {
         className="absolute inset-0 w-full h-full object-cover object-center"
         style={{ zIndex: 0 }}
       >
+        <source src="/hero.mp4" type="video/mp4" />
         <source
           src="https://videos.pexels.com/video-files/3931949/3931949-uhd_2560_1440_25fps.mp4"
           type="video/mp4"
         />
-        <source src="/hero.mp4" type="video/mp4" />
       </video>
 
       {/* Gradient overlay */}

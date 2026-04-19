@@ -109,7 +109,8 @@ export function Navbar() {
   // H1: merged into one effect to guarantee auth-reset runs before fetch guard check
   useEffect(() => {
     const AUTH_PATHS = ['/login', '/signup', '/auth/callback']
-    if (AUTH_PATHS.includes(prevPathRef.current) || AUTH_PATHS.includes(pathname)) profileFetched.current = false
+    // Only reset when LEAVING an auth page — not when arriving, to prevent double-fetch race
+    if (AUTH_PATHS.includes(prevPathRef.current) && !AUTH_PATHS.includes(pathname)) profileFetched.current = false
     prevPathRef.current = pathname
 
     if (profileFetched.current) return

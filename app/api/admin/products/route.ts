@@ -86,7 +86,7 @@ export async function POST(request: Request) {
   const productId = product.id
 
   if (images?.length) {
-    await supabase!.from('product_images').insert(
+    const { error: imgError } = await supabase!.from('product_images').insert(
       images.map((img, i) => ({
         product_id: productId,
         image_url: img.url,
@@ -94,10 +94,11 @@ export async function POST(request: Request) {
         display_order: i,
       }))
     )
+    if (imgError) return NextResponse.json({ error: imgError.message }, { status: 500 })
   }
 
   if (variants?.length) {
-    await supabase!.from('product_variants').insert(
+    const { error: varError } = await supabase!.from('product_variants').insert(
       variants.map((v) => ({
         product_id: productId,
         size: v.size,
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
         stock_qty: v.stock_qty,
       }))
     )
+    if (varError) return NextResponse.json({ error: varError.message }, { status: 500 })
   }
 
   return NextResponse.json({ id: productId })
@@ -125,7 +127,7 @@ export async function PUT(request: Request) {
   if (images !== undefined) {
     await supabase!.from('product_images').delete().eq('product_id', id)
     if (images.length) {
-      await supabase!.from('product_images').insert(
+      const { error: imgError } = await supabase!.from('product_images').insert(
         images.map((img, i) => ({
           product_id: id,
           image_url: img.url,
@@ -133,13 +135,14 @@ export async function PUT(request: Request) {
           display_order: i,
         }))
       )
+      if (imgError) return NextResponse.json({ error: imgError.message }, { status: 500 })
     }
   }
 
   if (variants !== undefined) {
     await supabase!.from('product_variants').delete().eq('product_id', id)
     if (variants.length) {
-      await supabase!.from('product_variants').insert(
+      const { error: varError } = await supabase!.from('product_variants').insert(
         variants.map((v) => ({
           product_id: id,
           size: v.size,
@@ -147,6 +150,7 @@ export async function PUT(request: Request) {
           stock_qty: v.stock_qty,
         }))
       )
+      if (varError) return NextResponse.json({ error: varError.message }, { status: 500 })
     }
   }
 
@@ -160,7 +164,6 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-  const { z } = await import('zod')
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
   // Remove child records first — FK constraints block direct product deletion
