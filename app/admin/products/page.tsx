@@ -153,6 +153,9 @@ export default function AdminProductsPage() {
     if (res.ok) {
       setProducts((prev) => prev.filter((p) => p.id !== id))
       addToast('Product deleted', 'success')
+    } else {
+      const body = await res.json().catch(() => ({}))
+      addToast(body.error ?? 'Delete failed', 'error')
     }
   }
 

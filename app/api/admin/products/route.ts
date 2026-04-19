@@ -163,6 +163,11 @@ export async function DELETE(request: Request) {
   const { z } = await import('zod')
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
+  // Remove child records first — FK constraints block direct product deletion
+  await supabase!.from('product_images').delete().eq('product_id', id)
+  await supabase!.from('product_variants').delete().eq('product_id', id)
+  await supabase!.from('reviews').delete().eq('product_id', id)
+
   const { error: deleteError } = await supabase!.from('products').delete().eq('id', id)
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
   return NextResponse.json({ success: true })
