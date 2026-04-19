@@ -95,7 +95,11 @@ export async function PATCH(request: Request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id)
-  await supabase.from('addresses').update({ is_default: true }).eq('id', idParsed.data).eq('user_id', user.id)
+  const { error: clearErr } = await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id)
+  if (clearErr) return NextResponse.json({ error: clearErr.message }, { status: 500 })
+
+  const { error: setErr } = await supabase.from('addresses').update({ is_default: true }).eq('id', idParsed.data).eq('user_id', user.id)
+  if (setErr) return NextResponse.json({ error: setErr.message }, { status: 500 })
+
   return NextResponse.json({ success: true })
 }
