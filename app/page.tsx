@@ -24,7 +24,7 @@ export default async function HomePage() {
     ])
     settings = settingsRes.data
     lookbook = lookbookRes.data
-  } catch (e) { console.error('[homepage] data fetch error:', e) }
+  } catch (e) { console.error('[homepage] data fetch error:', e instanceof Error ? e.message : String(e)) }
 
   const featuredIds = (settings?.featured_product_ids as string[]) ?? []
 

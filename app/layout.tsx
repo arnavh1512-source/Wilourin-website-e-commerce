@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import './globals.css'
 import { Providers } from '@/components/layout/Providers'
 import { Navbar } from '@/components/layout/Navbar'
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className="bg-w-bg text-w-dark antialiased">
         <Providers>
-          <Navbar />
+          <Suspense fallback={null}><Navbar /></Suspense>
           <main className="min-h-screen">{children}</main>
           <Footer />
           <CartDrawer />

@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-/* ─── Letter definitions ──────────────────────────────────────────── */
-// viewBox: 0 0 900 200, letters y=40–160
 const LETTERS = [
   {
     id: 'W',
@@ -62,6 +60,10 @@ export default function SplashScreen() {
   const [linesIn, setLinesIn] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const didAnimate = useRef(false)
+  // H1: all timers in one ref so skip() can cancel them all
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const clearAll = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
   useEffect(() => {
     try { if (sessionStorage.getItem('splashShown')) return } catch {}
@@ -72,11 +74,15 @@ export default function SplashScreen() {
     if (!visible || didAnimate.current) return
     didAnimate.current = true
 
-    // Lines sweep in immediately
-    setTimeout(() => setLinesIn(true), 50)
+    const t = (fn: () => void, ms: number) => {
+      const id = setTimeout(fn, ms)
+      timers.current.push(id)
+      return id
+    }
 
-    // Letter stroke animations
-    setTimeout(() => {
+    t(() => setLinesIn(true), 50)
+
+    t(() => {
       const svg = svgRef.current
       if (!svg) return
 
@@ -88,18 +94,17 @@ export default function SplashScreen() {
         path.style.strokeDasharray = `${len}`
         path.style.strokeDashoffset = `${len}`
 
-        setTimeout(() => {
-          // Force layout so transition picks up the starting value
+        t(() => {
           void path.getBoundingClientRect()
           path.style.transition = 'stroke-dashoffset 600ms cubic-bezier(0.4, 0, 0.35, 1)'
           path.style.strokeDashoffset = '0'
 
-          // Burst particles when letter finishes
-          setTimeout(() => {
+          // M1: cancel Web Animations after finish to release compositor memory
+          t(() => {
             svg.querySelectorAll<SVGCircleElement>(`[data-group="${letter.id}"]`).forEach((dot) => {
               const dx = parseFloat(dot.dataset.dx ?? '0')
               const dy = parseFloat(dot.dataset.dy ?? '0')
-              dot.animate(
+              const anim = dot.animate(
                 [
                   { opacity: 1, transform: 'translate(0px,0px) scale(0)' },
                   { opacity: 1, transform: `translate(${dx}px,${dy}px) scale(1)`, offset: 0.55 },
@@ -107,36 +112,43 @@ export default function SplashScreen() {
                 ],
                 { duration: 420, easing: 'ease-out', fill: 'forwards' }
               )
+              anim.onfinish = () => anim.cancel()
             })
-          }, 620)
+          }, i * 200 + 620)
         }, i * 200)
       })
     }, 100)
 
-    // Phase timers
-    const t1 = setTimeout(() => setPhase('hold'), 2900)
-    const t2 = setTimeout(() => setPhase('exit'), 3700)
-    const t3 = setTimeout(() => {
+    t(() => setPhase('hold'), 2900)
+    t(() => setPhase('exit'), 3700)
+    t(() => {
       setPhase('done')
       setVisible(false)
       try { sessionStorage.setItem('splashShown', 'true') } catch {}
     }, 4600)
 
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+    return clearAll
   }, [visible])
 
+  // H1: skip cancels all pending timers before setting exit
   const skip = () => {
+    clearAll()
     setPhase('exit')
-    setTimeout(() => {
+    const id = setTimeout(() => {
       setVisible(false)
       try { sessionStorage.setItem('splashShown', 'true') } catch {}
     }, 600)
+    timers.current.push(id)
   }
 
   if (!visible || phase === 'done') return null
 
   return (
+    // M5: ARIA attributes for screen readers
     <div
+      role="dialog"
+      aria-label="Loading Wilourin"
+      aria-modal="true"
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: '#292929',
@@ -146,25 +158,26 @@ export default function SplashScreen() {
         pointerEvents: phase === 'exit' ? 'none' : 'all',
       }}
     >
+      {/* L1: overflow via style, not presentation attribute */}
+      {/* M5: aria-hidden on SVG — content is decorative */}
       <svg
         ref={svgRef}
         viewBox="0 0 900 200"
-        style={{ width: '90vw', maxWidth: 820, height: 'auto',
+        aria-hidden="true"
+        style={{
+          width: '90vw', maxWidth: 820, height: 'auto',
+          overflow: 'visible',
           transform: phase === 'exit' ? 'scale(1.08)' : 'scale(1)',
           transition: phase === 'exit' ? 'transform 600ms cubic-bezier(0.16,1,0.3,1)' : 'none',
         }}
-        overflow="visible"
       >
-        {/* Background lines */}
         {BG_LINE_Y.map((y, i) => (
           <line key={i} x1={-100} y1={y} x2={1000} y2={y}
             stroke="#fff" strokeWidth={0.7}
-            style={{ opacity: linesIn ? 0.18 : 0,
-              transition: `opacity 800ms ease ${i * 100}ms` }}
+            style={{ opacity: linesIn ? 0.18 : 0, transition: `opacity 800ms ease ${i * 100}ms` }}
           />
         ))}
 
-        {/* Letter strokes + particles */}
         {LETTERS.map((letter) => (
           <g key={letter.id}>
             <path
@@ -193,6 +206,7 @@ export default function SplashScreen() {
 
       <button
         onClick={skip}
+        aria-label="Skip intro"
         style={{
           position: 'absolute', bottom: 32, right: 32,
           background: 'none', border: 'none', cursor: 'pointer',
