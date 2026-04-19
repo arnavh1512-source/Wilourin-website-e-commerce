@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-// Field names match DB columns; enum matches validate/route.ts
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const discountSchema = z.object({
   code: z.string().min(1).max(50).toUpperCase(),
   type: z.enum(['percentage', 'flat', 'free_shipping']),
@@ -17,12 +19,13 @@ const discountSchema = z.object({
 const updateSchema = discountSchema.partial().extend({ id: z.string().uuid() })
 
 async function getAdminSupabase() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
   if (!user) return { supabase: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  const { data: adminRow } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).single()
+  const admin = createAdminClient()
+  const { data: adminRow } = await admin.from('admin_users').select('user_id').eq('user_id', user.id).single()
   if (!adminRow) return { supabase: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  return { supabase, error: null }
+  return { supabase: admin, error: null }
 }
 
 export async function GET() {
@@ -72,8 +75,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-  const { z: zod } = await import('zod')
-  if (!zod.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
   const { error: dbError } = await supabase!.from('discount_codes').delete().eq('id', id)
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })

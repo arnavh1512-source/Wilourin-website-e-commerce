@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const PRODUCT_STATUSES = ['Draft', 'Published', 'Archived'] as const
 
@@ -44,12 +47,13 @@ const putSchema = z.object({
 })
 
 async function getAdminSupabase() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
   if (!user) return { supabase: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  const { data: adminRow } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).single()
+  const admin = createAdminClient()
+  const { data: adminRow } = await admin.from('admin_users').select('user_id').eq('user_id', user.id).single()
   if (!adminRow) return { supabase: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  return { supabase, error: null }
+  return { supabase: admin, error: null }
 }
 
 export async function GET() {
@@ -122,7 +126,8 @@ export async function PUT(request: Request) {
 
   const { id, productData, variants, images } = parsed.data
 
-  await supabase!.from('products').update(productData).eq('id', id)
+  const { error: updateError } = await supabase!.from('products').update(productData).eq('id', id)
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
   if (images !== undefined) {
     await supabase!.from('product_images').delete().eq('product_id', id)
@@ -164,12 +169,16 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
-  // Remove child records first — FK constraints block direct product deletion
-  await supabase!.from('product_images').delete().eq('product_id', id)
-  await supabase!.from('product_variants').delete().eq('product_id', id)
-  await supabase!.from('reviews').delete().eq('product_id', id)
+  const { error: imgErr } = await supabase!.from('product_images').delete().eq('product_id', id)
+  if (imgErr) return NextResponse.json({ error: imgErr.message }, { status: 500 })
+
+  const { error: varErr } = await supabase!.from('product_variants').delete().eq('product_id', id)
+  if (varErr) return NextResponse.json({ error: varErr.message }, { status: 500 })
+
+  const { error: revErr } = await supabase!.from('reviews').delete().eq('product_id', id)
+  if (revErr) return NextResponse.json({ error: revErr.message }, { status: 500 })
 
   const { error: deleteError } = await supabase!.from('products').delete().eq('id', id)
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })

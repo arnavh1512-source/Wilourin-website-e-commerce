@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const supabase = createAdminClient()
   const { data: adminRow } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).single()
   if (!adminRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -18,7 +19,6 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!profiles) return NextResponse.json([])
 
-  // Aggregate order stats in one pass — avoids N+1 query
   const orderMap = new Map<string, { count: number; total: number }>()
   for (const o of orders ?? []) {
     const e = orderMap.get(o.user_id) ?? { count: 0, total: 0 }

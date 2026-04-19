@@ -7,7 +7,7 @@ import { useToastStore } from '@/lib/store'
 import { slugify } from '@/lib/utils'
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const BADGES = ['New Arrival', 'Bestseller', 'Sale', 'Low Stock', '']
+const BADGES = ['New', 'Sale', 'Hot', 'Limited', '']
 
 export default function AdminProductsPage() {
   const addToast = useToastStore((s) => s.addToast)
@@ -37,8 +37,8 @@ export default function AdminProductsPage() {
       const [p, c] = await Promise.all([pRes.json(), cRes.json()])
       setProducts(Array.isArray(p) ? p : [])
       setCategories(Array.isArray(c) ? c : [])
-    } catch (err) {
-      console.error('[Products] load threw:', err)
+    } catch {
+      // load failure — table stays empty
     } finally {
       setLoading(false)
     }
@@ -71,21 +71,29 @@ export default function AdminProductsPage() {
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
     setUploading(true)
-    for (const file of files) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('bucket', 'product-images')
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
-      const { url } = await res.json()
-      if (url) setImages((prev) => [...prev, { url, isPrimary: prev.length === 0 }])
-    }
+    const results = await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('bucket', 'product-images')
+        const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        const { url } = await res.json()
+        return url as string | undefined
+      })
+    )
+    setImages((prev) => {
+      const urls = results.filter(Boolean) as string[]
+      return [...prev, ...urls.map((url, i) => ({ url, isPrimary: prev.length === 0 && i === 0 }))]
+    })
     setUploading(false)
   }
 
   const removeImage = (idx: number) => {
     setImages((prev) => {
       const next = prev.filter((_, i) => i !== idx)
-      if (next.length && !next.some((i) => i.isPrimary)) next[0].isPrimary = true
+      if (next.length && !next.some((img) => img.isPrimary)) {
+        return next.map((img, i) => ({ ...img, isPrimary: i === 0 }))
+      }
       return next
     })
   }
@@ -122,7 +130,12 @@ export default function AdminProductsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editing.id, productData, variants, images }),
         })
-        if (!res.ok) throw new Error('Update failed')
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          addToast(err.error ?? 'Update failed', 'error')
+          setSaving(false)
+          return
+        }
       } else {
         const res = await fetch('/api/admin/products', {
           method: 'POST',
@@ -140,8 +153,8 @@ export default function AdminProductsPage() {
       addToast(`Product ${editing ? 'updated' : 'created'}!`, 'success')
       setShowForm(false)
       await loadData()
-    } catch {
-      addToast('Save failed', 'error')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Save failed', 'error')
     } finally {
       setSaving(false)
     }
@@ -237,7 +250,7 @@ export default function AdminProductsPage() {
             <label className="text-xs uppercase tracking-widest text-gray-400 block mb-2">Images</label>
             <div className="flex flex-wrap gap-3">
               {images.map((img, i) => (
-                <div key={i} className="relative group">
+                <div key={img.url} className="relative group">
                   <Image src={img.url} alt="" width={80} height={80} className="object-cover border border-gray-200" />
                   {img.isPrimary && <div className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A]/70 text-white text-[9px] text-center py-0.5">Primary</div>}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
@@ -270,7 +283,7 @@ export default function AdminProductsPage() {
                   </select>
                   <input value={v.color_name} onChange={(e) => updateVariant(i, 'color_name', e.target.value)}
                     placeholder="Color" className="flex-1 border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-400" />
-                  <input type="number" value={v.stock_qty} onChange={(e) => updateVariant(i, 'stock_qty', e.target.value)}
+                  <input type="number" value={v.stock_qty} onChange={(e) => updateVariant(i, 'stock_qty', Number(e.target.value))}
                     placeholder="Stock qty" className="w-24 border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-400" />
                   <button onClick={() => removeVariant(i)} className="text-gray-400 hover:text-red-500 transition-colors"><X size={14} /></button>
                 </div>
