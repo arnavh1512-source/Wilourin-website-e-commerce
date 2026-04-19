@@ -58,7 +58,7 @@ export async function GET() {
     totalOrders: (allOrders ?? []).length,
     thisMonthOrders: (thisMonthOrders ?? []).length,
     totalCustomers: totalCustomers ?? 0,
-    pendingOrders: statusCounts['Confirmed'] ?? 0,
+    pendingOrders: statusCounts['Pending'] ?? 0,
     lowStockCount: (lowStock ?? []).length,
     recentOrders: recentOrders ?? [],
     lowStockItems: ((lowStock ?? []) as unknown as LowStockVariant[]).slice(0, 5).map((v) => ({

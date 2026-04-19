@@ -20,6 +20,8 @@ const productSchema = z.object({
   care_instructions: z.string().max(2000).optional().nullable(),
   material: z.string().max(500).optional().nullable(),
   fit: z.string().max(200).optional().nullable(),
+  meta_title: z.string().max(160).optional().nullable(),
+  meta_description: z.string().max(320).optional().nullable(),
 })
 
 const variantSchema = z.object({
@@ -130,7 +132,8 @@ export async function PUT(request: Request) {
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
   if (images !== undefined) {
-    await supabase!.from('product_images').delete().eq('product_id', id)
+    const { error: imgDelErr } = await supabase!.from('product_images').delete().eq('product_id', id)
+    if (imgDelErr) return NextResponse.json({ error: imgDelErr.message }, { status: 500 })
     if (images.length) {
       const { error: imgError } = await supabase!.from('product_images').insert(
         images.map((img, i) => ({
@@ -145,7 +148,8 @@ export async function PUT(request: Request) {
   }
 
   if (variants !== undefined) {
-    await supabase!.from('product_variants').delete().eq('product_id', id)
+    const { error: varDelErr } = await supabase!.from('product_variants').delete().eq('product_id', id)
+    if (varDelErr) return NextResponse.json({ error: varDelErr.message }, { status: 500 })
     if (variants.length) {
       const { error: varError } = await supabase!.from('product_variants').insert(
         variants.map((v) => ({

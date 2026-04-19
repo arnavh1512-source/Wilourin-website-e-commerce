@@ -77,6 +77,11 @@ export default function AdminProductsPage() {
         formData.append('file', file)
         formData.append('bucket', 'product-images')
         const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          addToast(err.error ?? 'Upload failed', 'error')
+          return undefined
+        }
         const { url } = await res.json()
         return url as string | undefined
       })
@@ -250,7 +255,7 @@ export default function AdminProductsPage() {
             <label className="text-xs uppercase tracking-widest text-gray-400 block mb-2">Images</label>
             <div className="flex flex-wrap gap-3">
               {images.map((img, i) => (
-                <div key={img.url} className="relative group">
+                <div key={i} className="relative group">
                   <Image src={img.url} alt="" width={80} height={80} className="object-cover border border-gray-200" />
                   {img.isPrimary && <div className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A]/70 text-white text-[9px] text-center py-0.5">Primary</div>}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">

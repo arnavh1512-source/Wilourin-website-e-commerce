@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-const discountSchema = z.object({
+const discountBase = z.object({
   code: z.string().min(1).max(50).toUpperCase(),
   type: z.enum(['percentage', 'flat', 'free_shipping']),
   value: z.number().min(0),
@@ -16,7 +16,12 @@ const discountSchema = z.object({
   is_active: z.boolean().optional().default(true),
 })
 
-const updateSchema = discountSchema.partial().extend({ id: z.string().uuid() })
+const discountSchema = discountBase.refine(
+  (d) => !(d.type === 'percentage' && d.value > 100),
+  { message: 'Percentage discount cannot exceed 100', path: ['value'] }
+)
+
+const updateSchema = discountBase.partial().extend({ id: z.string().uuid() })
 
 async function getAdminSupabase() {
   const authClient = await createClient()

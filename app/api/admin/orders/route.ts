@@ -35,7 +35,10 @@ export async function GET(request: Request) {
 
   let q = supabase!.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(500)
   if (status) q = q.eq('order_status', status)
-  if (search) q = q.or(`order_number.ilike.%${search}%,guest_email.ilike.%${search}%`)
+  if (search) {
+    const safe = search.replace(/[^a-zA-Z0-9 @.\-_]/g, '').slice(0, 100)
+    if (safe) q = q.or(`order_number.ilike.%${safe}%,guest_email.ilike.%${safe}%`)
+  }
 
   const { data, error: dbError } = await q
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
