@@ -37,31 +37,25 @@ export function Hero({ headline, subtext, imageUrl: _imageUrl }: HeroProps) {
   }, [])
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ height: '100vh' }}>
-      {/* Video background */}
+    <section
+      className="relative w-full overflow-hidden bg-neutral-600"
+      style={{ height: '100vh' }}
+    >
+      {/* Video background — drop /hero.mp4 into /public when brand video is ready */}
       <video
         autoPlay
         muted
         loop
         playsInline
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover object-center"
         style={{ zIndex: 0 }}
-        poster="https://images.unsplash.com/photo-1503341338985-95ad33e8e0b4?w=1600&q=80"
       >
+        <source
+          src="https://videos.pexels.com/video-files/3931949/3931949-uhd_2560_1440_25fps.mp4"
+          type="video/mp4"
+        />
         <source src="/hero.mp4" type="video/mp4" />
-        {/* Fallback: dark fashion image */}
       </video>
-
-      {/* Fallback bg if no video */}
-      <div
-        className="absolute inset-0 bg-w-dark"
-        style={{
-          zIndex: 0,
-          backgroundImage: `url(https://images.unsplash.com/photo-1556906781-9a412961a28c?w=1600&q=80)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-        }}
-      />
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" style={{ zIndex: 1 }} />

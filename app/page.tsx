@@ -26,7 +26,9 @@ export default async function HomePage() {
     lookbook = lookbookRes.data
   } catch (e) { console.error('[homepage] data fetch error:', e instanceof Error ? e.message : String(e)) }
 
-  const featuredIds = (settings?.featured_product_ids as string[]) ?? []
+  const featuredIds = Array.isArray(settings?.featured_product_ids)
+    ? (settings.featured_product_ids as unknown[]).filter((x): x is string => typeof x === 'string')
+    : []
 
   try {
     if (featuredIds.length > 0) {

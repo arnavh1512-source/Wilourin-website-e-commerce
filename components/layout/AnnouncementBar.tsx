@@ -5,27 +5,28 @@ import { X } from 'lucide-react'
 
 interface AnnouncementBarProps {
   text: string | null
+  loading?: boolean
 }
 
-// M2: key includes a hash of the text so new announcements always show
-function textKey(text: string) {
-  let h = 0
-  for (let i = 0; i < text.length; i++) h = (Math.imul(31, h) + text.charCodeAt(i)) | 0
-  return `announcement-dismissed-${Math.abs(h)}`
-}
+const textKey = (text: string) => `announcement-dismissed::${text}`
 
-export function AnnouncementBar({ text }: AnnouncementBarProps) {
+export function AnnouncementBar({ text, loading }: AnnouncementBarProps) {
   const [visible, setVisible] = useState(false)
+  const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    if (!text) return
+    if (!text) { setChecked(true); return }
     try {
       if (!sessionStorage.getItem(textKey(text))) setVisible(true)
     } catch {
       setVisible(true)
     }
+    setChecked(true)
   }, [text])
 
+  // M1: reserve height while data is still loading to prevent CLS
+  if (loading) return <div className="bg-w-dark h-[37px]" aria-hidden="true" />
+  if (!checked && text) return <div className="bg-w-dark h-[37px]" aria-hidden="true" />
   if (!visible || !text) return null
 
   return (

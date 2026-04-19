@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { ShoppingBag, Heart, User, Search, Menu, X, Crown } from 'lucide-react'
@@ -9,9 +9,9 @@ import { AnnouncementBar } from './AnnouncementBar'
 import { cn } from '@/lib/utils'
 import { detectCityByIP, getStoredCity, setStoredCity } from '@/lib/location'
 
-// L3: module-level cache — Navbar persists across soft navigations so these
-// fetch once per browser session rather than on every route change
-const _cache: { announcement?: string | null; city?: string; profile?: { full_name?: string; avatar_url?: string; loyalty_tier?: string } | null; isAdmin?: boolean } = {}
+// Browser-only singleton — do not remove 'use client' or this becomes a cross-request data leak
+const ANNOUNCEMENT_TTL = 5 * 60 * 1000
+const _cache: { announcement?: string | null; announcementAt?: number; city?: string } = {}
 
 const NAV_LINKS = [
   { label: 'Men', href: '/products?category=men' },
@@ -27,20 +27,33 @@ const TIER_COLORS: Record<string, string> = {
   Bronze: 'text-amber-700',
 }
 
+interface ProfileShape {
+  full_name?: string
+  avatar_url?: string
+  loyalty_tier?: string
+  [key: string]: unknown
+}
+
 export function Navbar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [announcement, setAnnouncement] = useState<string | null>(null)
-  // L2: null = loading, prevents city flash before real data resolves
   const [announcementReady, setAnnouncementReady] = useState(false)
+  const [cityReady, setCityReady] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [detectedCity, setDetectedCity] = useState<string>('')
 
-  const { toggleCart: uiToggleCart, toggleSearch } = useUIStore()
+  const { toggleCart, toggleSearch, isCartOpen, isSearchOpen, isHelpOpen } = useUIStore()
   const wishlistCount = useWishlistStore((s) => s.items.length)
   const cartCount = useCartStore((s) => s.getItemCount())
-  const [profile, setProfile] = useState<{ full_name?: string; avatar_url?: string; loyalty_tier?: string } | null>(null)
+  const [profile, setProfile] = useState<ProfileShape | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const profileFetched = useRef(false)
+  const prevPathRef = useRef('')
+  const wasMenuOpenRef = useRef(false)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
+  const closeMenuBtnRef = useRef<HTMLButtonElement>(null)
+  const menuOverlayRef = useRef<HTMLDivElement>(null)
 
   // H3: check both pathname and query params for active link
   const isActive = useCallback((href: string) => {
@@ -53,49 +66,95 @@ export function Navbar() {
     })
   }, [pathname, searchParams])
 
-  // L2 + L3: fetch announcement once, cache result, no city flash
   useEffect(() => {
-    if ('announcement' in _cache) {
+    const cacheValid = 'announcement' in _cache && _cache.announcementAt && Date.now() - _cache.announcementAt < ANNOUNCEMENT_TTL
+    if (cacheValid) {
       setAnnouncement(_cache.announcement ?? null)
       setAnnouncementReady(true)
       return
     }
     fetch('/api/store/homepage')
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         const text = data?.settings?.announcement_text ?? null
         _cache.announcement = text
+        _cache.announcementAt = Date.now()
         setAnnouncement(text)
         setAnnouncementReady(true)
       })
-      .catch(() => { _cache.announcement = null; setAnnouncementReady(true) })
+      .catch(() => { setAnnouncementReady(true) })
   }, [])
 
   useEffect(() => {
-    if (_cache.city) { setDetectedCity(_cache.city); return }
     const stored = getStoredCity()
-    if (stored) { _cache.city = stored; setDetectedCity(stored); return }
+    if (stored && stored !== _cache.city) { _cache.city = stored; setDetectedCity(stored); setCityReady(true); return }
+    if (_cache.city !== undefined) { setDetectedCity(_cache.city); setCityReady(true); return }
     detectCityByIP()
-      .then((city) => { if (city) { _cache.city = city; setStoredCity(city); setDetectedCity(city) } })
-      .catch(() => {})
+      .then((city) => {
+        _cache.city = city || ''
+        if (city) { setStoredCity(city); setDetectedCity(city) }
+      })
+      .catch(() => { _cache.city = ''; setDetectedCity('') })
+      .finally(() => setCityReady(true))
   }, [])
 
+  useEffect(() => { setMenuOpen(false) }, [pathname])
+
+  // Return focus to hamburger whenever menu transitions from open → closed
   useEffect(() => {
-    if ('profile' in _cache) {
-      setProfile(_cache.profile ?? null)
-      setIsAdmin(_cache.isAdmin ?? false)
-      return
-    }
-    fetch('/api/account/me')
+    if (wasMenuOpenRef.current && !menuOpen) menuBtnRef.current?.focus()
+    wasMenuOpenRef.current = menuOpen
+  }, [menuOpen])
+
+  // H1: merged into one effect to guarantee auth-reset runs before fetch guard check
+  useEffect(() => {
+    const AUTH_PATHS = ['/login', '/signup', '/auth/callback']
+    if (AUTH_PATHS.includes(prevPathRef.current) || AUTH_PATHS.includes(pathname)) profileFetched.current = false
+    prevPathRef.current = pathname
+
+    if (profileFetched.current) return
+    profileFetched.current = true
+    const ac = new AbortController()
+    fetch('/api/account/me', { signal: ac.signal })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        _cache.profile = data?.profile ?? null
-        _cache.isAdmin = data?.isAdmin ?? false
-        setProfile(_cache.profile ?? null)
-        setIsAdmin(_cache.isAdmin ?? false)
+        setProfile(data?.profile ?? null)
+        setIsAdmin(data?.isAdmin ?? false)
       })
-      .catch(() => { _cache.profile = null; _cache.isAdmin = false })
-  }, [])
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === 'AbortError') return
+        setProfile(null)
+        setIsAdmin(false)
+      })
+    return () => ac.abort()
+  }, [pathname])
+
+  // Coordinate scroll lock with all overlays — prevents clobbering cart/search drawers
+  useEffect(() => {
+    const anyOpen = menuOpen || isCartOpen || isSearchOpen || isHelpOpen
+    document.body.style.overflow = anyOpen ? 'hidden' : ''
+  }, [menuOpen, isCartOpen, isSearchOpen, isHelpOpen])
+
+  // Release scroll lock on unmount only (e.g. navigate to /admin while menu is open)
+  useEffect(() => () => { document.body.style.overflow = '' }, [])
+
+  // Focus management: move focus into menu on open, trap Tab inside
+  useEffect(() => {
+    if (!menuOpen) return
+    closeMenuBtnRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setMenuOpen(false); return }
+      if (e.key === 'Tab') {
+        const focusable = menuOverlayRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+        if (!focusable?.length) return
+        const first = focusable[0], last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [menuOpen])
 
   const isAdminRoute = pathname.startsWith('/admin')
   if (isAdminRoute) return null
@@ -103,14 +162,14 @@ export function Navbar() {
   // M4: dark only on homepage — evaluated per render so it tracks navigation correctly
   const dark = pathname === '/'
 
-  // L2: show announcement bar only once data has resolved to avoid city flash
-  const announcementText = announcementReady
+  // M2: gate on both resolving to prevent race-condition pop-in
+  const announcementText = announcementReady && cityReady
     ? (announcement ?? (detectedCity ? `Delivering to ${detectedCity}` : null))
     : null
 
   return (
     <>
-      <AnnouncementBar text={announcementText} />
+      <AnnouncementBar text={announcementText} loading={!announcementReady || !cityReady} />
       <header
         className={cn(
           'sticky top-0 z-50 w-full transition-all duration-300',
@@ -139,9 +198,11 @@ export function Navbar() {
 
             {/* Mobile — hamburger */}
             <button
+              ref={menuBtnRef}
               className={cn('lg:hidden p-2 transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
+              aria-expanded={menuOpen}
             >
               <Menu size={22} />
             </button>
@@ -169,7 +230,7 @@ export function Navbar() {
                   </span>
                 )}
               </Link>
-              <button onClick={uiToggleCart} aria-label="Cart"
+              <button onClick={toggleCart} aria-label="Cart"
                 className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}>
                 <ShoppingBag size={20} />
                 {cartCount > 0 && (
@@ -178,11 +239,11 @@ export function Navbar() {
                   </span>
                 )}
               </button>
-              <Link href={profile ? '/account' : '/login'} aria-label="Account"
+              <Link href={profile ? '/account' : '/login'} aria-label={profile?.loyalty_tier ? `Account — ${profile.loyalty_tier} member` : 'Account'}
                 className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}>
                 <User size={20} />
                 {profile && (
-                  <span className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier ?? ''])}>
+                  <span aria-hidden="true" className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier ?? ''] ?? 'text-w-graphite')}>
                     <Crown size={10} />
                   </span>
                 )}
@@ -199,10 +260,10 @@ export function Navbar() {
 
       {/* Mobile full-screen menu */}
       {menuOpen && (
-        <div className="fixed inset-0 z-[60] bg-w-bg flex flex-col animate-fade-in">
+        <div ref={menuOverlayRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[60] bg-w-bg flex flex-col animate-fade-in">
           <div className="flex items-center justify-between px-6 py-5 border-b border-w-ghost">
             <span className="font-serif text-2xl tracking-[0.15em] uppercase text-w-dark">Wilourin</span>
-            <button onClick={() => setMenuOpen(false)} className="text-w-dark" aria-label="Close menu"><X size={24} /></button>
+            <button ref={closeMenuBtnRef} onClick={() => setMenuOpen(false)} className="text-w-dark" aria-label="Close menu"><X size={24} /></button>
           </div>
           <nav className="flex flex-col gap-1 p-6 flex-1">
             {NAV_LINKS.map((link) => (
