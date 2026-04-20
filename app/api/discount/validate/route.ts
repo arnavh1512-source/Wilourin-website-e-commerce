@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         .eq('code_id', discount.id)
         .eq('user_id', user.id)
 
-      if ((count ?? 0) >= discount.per_user_limit) {
+      if (discount.per_user_limit > 0 && (count ?? 0) >= discount.per_user_limit) {
         return NextResponse.json({ valid: false, message: 'You have already used this promo code' })
       }
     }

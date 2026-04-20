@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS orders (
   points_redeemed INTEGER DEFAULT 0,
   total DECIMAL(10,2) NOT NULL,
   payment_status TEXT DEFAULT 'Pending' CHECK (payment_status IN ('Pending','Paid','Failed','Refunded')),
-  order_status TEXT DEFAULT 'Processing' CHECK (order_status IN ('Processing','Confirmed','Shipped','Delivered','Cancelled','Refund Requested')),
+  order_status TEXT DEFAULT 'Processing' CHECK (order_status IN ('Processing','Confirmed','Shipped','Delivered','Cancelled','Refund Requested','Refunded','Pending')),
   paytm_order_id TEXT,
   paytm_txn_id TEXT,
   paytm_txn_amount TEXT,
@@ -302,3 +302,14 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ═══════════════════════════════════════════════════════
+-- PERFORMANCE INDEXES
+-- ═══════════════════════════════════════════════════════
+CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_user_product ON reviews(user_id, product_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_discount_usage_code_user ON discount_code_usage(code_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_recently_viewed_user_id ON recently_viewed(user_id);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(order_status);

@@ -19,8 +19,7 @@ export default function AdminMediaPage() {
       const res = await fetch('/api/admin/media')
       const data = await res.json()
       setFiles(Array.isArray(data) ? data : [])
-    } catch (err) {
-      console.error('[Media] load threw:', err)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -32,14 +31,17 @@ export default function AdminMediaPage() {
     const selectedFiles = Array.from(e.target.files ?? [])
     if (!selectedFiles.length) return
     setUploading(true)
+    let successCount = 0
     for (const file of selectedFiles) {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('bucket', 'product-images')
-      await fetch('/api/admin/upload', { method: 'POST', body: formData })
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+      if (res.ok) successCount++
+      else { const e = await res.json().catch(() => ({})); addToast(e.error ?? `Failed to upload ${file.name}`, 'error') }
     }
     setUploading(false)
-    addToast(`${selectedFiles.length} file(s) uploaded`, 'success')
+    if (successCount > 0) addToast(`${successCount} file(s) uploaded`, 'success')
     load()
   }
 

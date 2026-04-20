@@ -19,8 +19,7 @@ export default function AdminSettingsPage() {
         const res = await fetch('/api/admin/settings')
         const data = await res.json()
         setSettings(data ?? {})
-      } catch (err) {
-        console.error('[Settings] load threw:', err)
+      } catch {
       } finally {
         setLoading(false)
       }
@@ -36,6 +35,7 @@ export default function AdminSettingsPage() {
     formData.append('file', file)
     formData.append('bucket', 'product-images')
     const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+    if (!res.ok) { addToast('Logo upload failed', 'error'); setUploading(false); return }
     const { url } = await res.json()
     if (url) setSettings((prev: any) => ({ ...prev, logo_url: url }))
     setUploading(false)

@@ -32,10 +32,11 @@ export default function AdminOrdersPage() {
       if (statusFilter) params.set('status', statusFilter)
       if (search) params.set('search', search)
       const res = await fetch(`/api/admin/orders?${params.toString()}`)
+      if (!res.ok) { setOrders([]); return }
       const data = await res.json()
       setOrders(Array.isArray(data) ? data : [])
-    } catch (err) {
-      console.error('[Orders] fetchOrders threw:', err)
+    } catch {
+      setOrders([])
     } finally {
       setLoading(false)
     }
@@ -157,7 +158,7 @@ export default function AdminOrdersPage() {
 
         {/* Order detail panel */}
         {selected && (
-          <div className="w-80 shrink-0 bg-white border border-gray-100 p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-160px)]">
+          <div key={selected.id} className="w-80 shrink-0 bg-white border border-gray-100 p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-160px)]">
             <div className="flex items-center justify-between">
               <p className="font-mono font-semibold text-sm">{selected.order_number}</p>
               <button onClick={() => printInvoice(selected)} className="text-gray-400 hover:text-gray-800 transition-colors"><Printer size={16} /></button>

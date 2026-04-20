@@ -23,7 +23,7 @@ const addressSchema = z.object({
 })
 type AddressForm = z.infer<typeof addressSchema>
 
-const STEPS = ['Address', 'Shipping', 'Payment', 'Review']
+const STEPS = ['Address', 'Shipping', 'Payment']
 
 declare global {
   interface Window {
@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   const { profile } = useUserStore()
   const addToast = useToastStore((s) => s.addToast)
 
-  const [step] = useState(0)
+  const [step, setStep] = useState(0)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
   const [useNewAddress, setUseNewAddress] = useState(false)
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
     }
   }
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<AddressForm>({
+  const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<AddressForm>({
     resolver: zodResolver(addressSchema),
   })
 
@@ -90,16 +90,19 @@ export default function CheckoutPage() {
 
   // Fetch store settings once on mount
   useEffect(() => {
-    fetch('/api/store/settings').then((r) => r.json()).then((data) => {
-      if (data) setStoreSettings({
-        freeThreshold: data.free_shipping_threshold,
-        standardCost: data.standard_shipping_cost,
-        expressCost: data.express_shipping_cost,
-        standardDays: data.standard_shipping_days,
-        expressDays: data.express_shipping_days,
-        pointsPerRupee: data.loyalty_points_per_rupee,
+    fetch('/api/store/settings')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data) setStoreSettings({
+          freeThreshold: data.free_shipping_threshold,
+          standardCost: data.standard_shipping_cost,
+          expressCost: data.express_shipping_cost,
+          standardDays: data.standard_shipping_days,
+          expressDays: data.express_shipping_days,
+          pointsPerRupee: data.loyalty_points_per_rupee ?? 1,
+        })
       })
-    })
+      .catch(() => {})
   }, [])
 
   // Redirect empty cart; load addresses when profile is available
@@ -219,7 +222,7 @@ export default function CheckoutPage() {
         <div className="lg:col-span-3 space-y-8">
 
           {/* Step 0 — Address */}
-          <section>
+          {step === 0 && <section>
             <h2 className="font-serif text-2xl mb-5">Delivery Address</h2>
             {/* Saved addresses */}
             {savedAddresses.length > 0 && (
@@ -296,10 +299,24 @@ export default function CheckoutPage() {
                 </div>
               </form>
             )}
-          </section>
+            <div className="flex justify-end mt-6">
+              <button type="button" onClick={async () => {
+                if (!selectedAddressId && !useNewAddress) { addToast('Please select a delivery address', 'warning'); return }
+                if (useNewAddress) {
+                  const fields: (keyof AddressForm)[] = ['full_name', 'phone', 'line1', 'city', 'state', 'pincode']
+                  if (!profile) fields.push('email')
+                  const valid = await trigger(fields)
+                  if (!valid) { addToast('Please fill in all required address fields', 'warning'); return }
+                }
+                setStep(1)
+              }} className="bg-[#0A0A0A] text-white px-8 py-3 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors flex items-center gap-2">
+                Continue to Shipping <ChevronRight size={14} />
+              </button>
+            </div>
+          </section>}
 
           {/* Step 1 — Shipping */}
-          <section>
+          {step === 1 && <section>
             <h2 className="font-serif text-2xl mb-5">Shipping Method</h2>
             {detectedCity && (
               <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
@@ -327,27 +344,38 @@ export default function CheckoutPage() {
                 </label>
               ))}
             </div>
-          </section>
+            <div className="flex justify-between mt-6">
+              <button type="button" onClick={() => setStep(0)} className="text-sm text-gray-500 underline hover:text-gray-800">← Back</button>
+              <button type="button" onClick={() => setStep(2)} className="bg-[#0A0A0A] text-white px-8 py-3 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors flex items-center gap-2">
+                Continue to Payment <ChevronRight size={14} />
+              </button>
+            </div>
+          </section>}
 
-          {/* Step 2 — Loyalty points */}
-          {profile && (profile.loyalty_points ?? 0) >= 10 && (
-            <section>
-              <h2 className="font-serif text-2xl mb-5">Loyalty Points</h2>
-              <label className="flex items-center justify-between border border-gray-200 p-4 rounded cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" checked={redeemPoints} onChange={(e) => setRedeemPoints(e.target.checked)} />
-                  <div>
-                    <p className="text-sm font-medium flex items-center gap-1.5">
-                      <Coins size={14} />
-                      Redeem {maxPointsRedeemable} points
-                    </p>
-                    <p className="text-xs text-gray-500">Save {formatPrice(pointsDiscount)} on this order</p>
+          {/* Step 2 — Loyalty points + Pay */}
+          {step === 2 && <>
+            {profile && (profile.loyalty_points ?? 0) >= 10 && (
+              <section>
+                <h2 className="font-serif text-2xl mb-5">Loyalty Points</h2>
+                <label className="flex items-center justify-between border border-gray-200 p-4 rounded cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={redeemPoints} onChange={(e) => setRedeemPoints(e.target.checked)} />
+                    <div>
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Coins size={14} />
+                        Redeem {maxPointsRedeemable} points
+                      </p>
+                      <p className="text-xs text-gray-500">Save {formatPrice(pointsDiscount)} on this order</p>
+                    </div>
                   </div>
-                </div>
-                <span className="text-xs text-gray-500">{profile.loyalty_points} pts available</span>
-              </label>
-            </section>
-          )}
+                  <span className="text-xs text-gray-500">{profile.loyalty_points} pts available</span>
+                </label>
+              </section>
+            )}
+            <div className="flex justify-between mt-2">
+              <button type="button" onClick={() => setStep(1)} className="text-sm text-gray-500 underline hover:text-gray-800">← Back</button>
+            </div>
+          </>}
         </div>
 
         {/* Right — Order summary */}
@@ -378,14 +406,16 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <button
-              onClick={placeOrder}
-              disabled={paying}
-              className="w-full flex items-center justify-center gap-2 bg-[#0A0A0A] text-white py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-60"
-            >
-              <Lock size={14} />
-              {paying ? 'Opening Paytm…' : 'Pay with Paytm'}
-            </button>
+            {step === 2 && (
+              <button
+                onClick={placeOrder}
+                disabled={paying}
+                className="w-full flex items-center justify-center gap-2 bg-[#0A0A0A] text-white py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-60"
+              >
+                <Lock size={14} />
+                {paying ? 'Opening Paytm…' : 'Pay with Paytm'}
+              </button>
+            )}
 
             <div className="flex flex-wrap justify-center gap-2">
               {['UPI', 'Cards', 'Wallets', 'Net Banking', 'BNPL', 'EMI'].map((m) => (

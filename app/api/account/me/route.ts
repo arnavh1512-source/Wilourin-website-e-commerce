@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -13,9 +14,10 @@ export async function GET() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const adminClient = createAdminClient()
   const [{ data: profile }, { data: adminRow }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('admin_users').select('user_id').eq('user_id', user.id).single(),
+    adminClient.from('admin_users').select('user_id').eq('user_id', user.id).single(),
   ])
   return NextResponse.json({ user: { id: user.id, email: user.email }, profile: profile ?? null, isAdmin: !!adminRow })
 }

@@ -23,8 +23,7 @@ export default function AdminCategoriesPage() {
       const res = await fetch('/api/admin/categories')
       const data = await res.json()
       setCategories(Array.isArray(data) ? data : [])
-    } catch (err) {
-      console.error('[Categories] load threw:', err)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -70,18 +69,20 @@ export default function AdminCategoriesPage() {
 
     try {
       if (editing) {
-        await fetch('/api/admin/categories', {
+        const res = await fetch('/api/admin/categories', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editing.id, ...data }),
         })
+        if (!res.ok) { const e = await res.json().catch(() => ({})); addToast(e.error ?? 'Update failed', 'error'); return }
         addToast('Category updated', 'success')
       } else {
-        await fetch('/api/admin/categories', {
+        const res = await fetch('/api/admin/categories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         })
+        if (!res.ok) { const e = await res.json().catch(() => ({})); addToast(e.error ?? 'Create failed', 'error'); return }
         addToast('Category created', 'success')
       }
       setShowForm(false)

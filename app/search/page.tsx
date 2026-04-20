@@ -45,8 +45,7 @@ export default function SearchPage() {
         const res = await fetch(`/api/store/products?${params.toString()}`)
         const data = await res.json()
         setResults(Array.isArray(data) ? (data as ProductResult[]) : [])
-      } catch (err) {
-        console.error('[Search] doSearch threw:', err)
+      } catch {
         setResults([])
       } finally {
         setLoading(false)

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bookmark, Share2, Users } from 'lucide-react'
-import { useCartStore, useWishlistStore, useUIStore, useToastStore } from '@/lib/store'
+import { ArrowLeft, Bookmark, Share2, Users, Star } from 'lucide-react'
+import { useCartStore, useWishlistStore, useUIStore, useToastStore, useUserStore } from '@/lib/store'
 import { formatPrice, isLowStock, cn } from '@/lib/utils'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { createClient } from '@/lib/supabase/client'
@@ -25,6 +25,13 @@ function useViewerCount(productId: string) {
   return count
 }
 
+interface SizeGuideData {
+  id: string
+  name: string
+  image_url: string | null
+  measurements: { rows: Array<Record<string, string>>; columns: string[]; unit?: string } | null
+}
+
 interface Props {
   product: {
     id: string; name: string; slug: string; description: string | null
@@ -38,13 +45,14 @@ interface Props {
   reviews: Review[]
   related: Array<{ id: string; name: string; slug: string; price: number; original_price: number | null; badge: string | null; product_images: Array<{ id: string; image_url: string; is_primary: boolean }> }>
   avgRating: number
+  sizeGuide: SizeGuideData | null
 }
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const TABS = ['DESCRIPTION', 'COMPOSITION', 'MEASUREMENTS'] as const
 type Tab = typeof TABS[number]
 
-export function ProductDetail({ product, reviews, related, avgRating }: Props) {
+export function ProductDetail({ product, reviews, related, avgRating, sizeGuide }: Props) {
   const router = useRouter()
   const images = [...product.product_images].sort((a, b) => a.display_order - b.display_order)
   const [activeImageIdx, setActiveImageIdx] = useState(0)
@@ -54,6 +62,7 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('DESCRIPTION')
   const [sizeError, setSizeError] = useState(false)
   const [qty, setQty] = useState(1)
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
 
   const addItem = useCartStore((s) => s.addItem)
   const { isWishlisted, addItem: addWish, removeItem: removeWish } = useWishlistStore()
@@ -61,6 +70,16 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
   const addToast = useToastStore((s) => s.addToast)
   const wishlisted = isWishlisted(product.id)
   const viewerCount = useViewerCount(product.id)
+  const userProfile = useUserStore((s) => s.profile)
+
+  useEffect(() => {
+    if (!userProfile) return
+    fetch('/api/recently-viewed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product_id: product.id }),
+    }).catch(() => {})
+  }, [product.id, userProfile])
 
   const colors = Array.from(new Map(
     product.product_variants
@@ -110,9 +129,23 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
     if (wishlisted) {
       removeWish(product.id)
       addToast('Removed from wishlist', 'info')
+      if (userProfile) {
+        fetch('/api/account/wishlist', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: product.id }),
+        }).catch(() => {})
+      }
     } else {
       addWish({ id: product.id, name: product.name, slug: product.slug, price: product.price, original_price: product.original_price, badge: product.badge as Parameters<typeof addWish>[0]['badge'], image_url: images[0]?.image_url ?? '' })
       addToast('Saved to wishlist', 'success')
+      if (userProfile) {
+        fetch('/api/account/wishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: product.id }),
+        }).catch(() => {})
+      }
     }
   }
 
@@ -200,9 +233,17 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
 
           {/* Sizes */}
           <div className="mb-5">
-            <p className={cn('font-sans text-xs uppercase tracking-widest mb-3', sizeError ? 'text-w-forest' : 'text-w-graphite')}>
-              {sizeError ? 'Please select a size' : 'Size'}
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className={cn('font-sans text-xs uppercase tracking-widest', sizeError ? 'text-w-forest' : 'text-w-graphite')}>
+                {sizeError ? 'Please select a size' : 'Size'}
+              </p>
+              {sizeGuide && (
+                <button onClick={() => setSizeGuideOpen(true)}
+                  className="font-sans text-xs text-w-graphite underline hover:text-w-dark transition-colors">
+                  Size Guide
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2">
               {variantsBySize.map(({ size, variant }) => {
                 const outOfStock = !variant || variant.stock_qty === 0
@@ -330,9 +371,17 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
 
               {/* Sizes */}
               <div>
-                <p className={cn('font-sans text-xs uppercase tracking-widest mb-3', sizeError ? 'text-w-forest' : 'text-w-graphite')}>
-                  {sizeError ? 'Please select a size' : 'Size'}
-                </p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className={cn('font-sans text-xs uppercase tracking-widest', sizeError ? 'text-w-forest' : 'text-w-graphite')}>
+                    {sizeError ? 'Please select a size' : 'Size'}
+                  </p>
+                  {sizeGuide && (
+                    <button onClick={() => setSizeGuideOpen(true)}
+                      className="font-sans text-xs text-w-graphite underline hover:text-w-dark transition-colors">
+                      Size Guide
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {variantsBySize.map(({ size, variant }) => {
                     const outOfStock = !variant || variant.stock_qty === 0
@@ -400,42 +449,13 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
         </div>
       </div>
 
-      {/* Reviews */}
-      {reviews.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-w-ghost">
-          <h2 className="font-serif text-w-dark text-3xl mb-6">Reviews ({reviews.length})</h2>
-          <div className="flex items-center gap-3 mb-8">
-            <span className="font-serif text-5xl text-w-dark">{avgRating.toFixed(1)}</span>
-            <div>
-              <div className="flex gap-0.5">
-                {[1,2,3,4,5].map((s) => (
-                  <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill={s <= Math.round(avgRating) ? '#1B4332' : 'none'} stroke="#1B4332" strokeWidth="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                ))}
-              </div>
-              <p className="font-sans text-xs text-w-graphite mt-0.5">{reviews.length} reviews</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {reviews.map((r) => (
-              <div key={r.id} className="bg-w-surface p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map((s) => (
-                      <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill={s <= r.rating ? '#1B4332' : 'none'} stroke="#1B4332" strokeWidth="2">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="font-sans text-xs font-medium text-w-dark">{r.reviewer_name}</span>
-                </div>
-                {r.review_text && <p className="font-sans text-xs text-w-graphite leading-relaxed">{r.review_text}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Size Guide Modal */}
+      {sizeGuide && sizeGuideOpen && (
+        <SizeGuideModal guide={sizeGuide} onClose={() => setSizeGuideOpen(false)} />
       )}
+
+      {/* Reviews */}
+      <ReviewsSection productId={product.id} initialReviews={reviews} initialAvg={avgRating} />
 
       {/* Related products */}
       {related.length > 0 && (
@@ -462,6 +482,229 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Reviews Section ──────────────────────────────────────────────────────────
+
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+
+function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0)
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button key={s} type="button"
+          onClick={() => onChange?.(s)}
+          onMouseEnter={() => onChange && setHovered(s)}
+          onMouseLeave={() => onChange && setHovered(0)}
+          className={onChange ? 'cursor-pointer' : 'cursor-default'}
+        >
+          <Star size={18}
+            fill={(hovered || value) >= s ? '#1B4332' : 'none'}
+            stroke="#1B4332"
+            strokeWidth={1.5}
+          />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReviewsSection({ productId, initialReviews, initialAvg }: {
+  productId: string
+  initialReviews: Review[]
+  initialAvg: number
+}) {
+  const { profile } = useUserStore()
+  const isLoggedIn = !!profile
+  const addToast = useToastStore((s) => s.addToast)
+  const [reviews, setReviews] = useState<Review[]>(initialReviews)
+  const [avgRating, setAvgRating] = useState(initialAvg)
+  const [showForm, setShowForm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [rating, setRating] = useState(5)
+  const [reviewText, setReviewText] = useState('')
+  const [sizePurchased, setSizePurchased] = useState('')
+  const [hasReviewed, setHasReviewed] = useState(false)
+
+  const checkExisting = useCallback(async () => {
+    if (!isLoggedIn) return
+    const res = await fetch('/api/reviews/check?product_id=' + productId)
+    if (res.ok) {
+      const data = await res.json()
+      setHasReviewed(!!data.exists)
+    }
+  }, [isLoggedIn, productId])
+
+  useEffect(() => { checkExisting() }, [checkExisting])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (rating === 0) { addToast('Please select a rating', 'warning'); return }
+    setSubmitting(true)
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product_id: productId, rating, review_text: reviewText || undefined, size_purchased: sizePurchased || undefined }),
+    })
+    setSubmitting(false)
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      addToast(e.error ?? 'Failed to submit review', 'error')
+      return
+    }
+    const newReview = await res.json()
+    const updated = [newReview, ...reviews]
+    setReviews(updated)
+    setAvgRating(updated.reduce((s, r) => s + r.rating, 0) / updated.length)
+    setShowForm(false)
+    setHasReviewed(true)
+    setReviewText('')
+    setSizePurchased('')
+    setRating(5)
+    addToast('Review submitted!', 'success')
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-w-ghost">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-w-dark text-3xl">Reviews ({reviews.length})</h2>
+        {!isLoggedIn ? (
+          <a href="/login" className="font-sans text-xs uppercase tracking-widest border border-w-dark text-w-dark px-4 py-2 hover:bg-w-dark hover:text-white transition-colors">
+            Login to Write a Review
+          </a>
+        ) : hasReviewed ? (
+          <span className="font-sans text-xs text-w-graphite">You&apos;ve reviewed this product</span>
+        ) : (
+          <button onClick={() => setShowForm(!showForm)}
+            className="font-sans text-xs uppercase tracking-widest border border-w-dark text-w-dark px-4 py-2 hover:bg-w-dark hover:text-white transition-colors">
+            {showForm ? 'Cancel' : 'Write a Review'}
+          </button>
+        )}
+      </div>
+
+      {/* Rating summary */}
+      {reviews.length > 0 && (
+        <div className="flex items-center gap-3 mb-8">
+          <span className="font-serif text-5xl text-w-dark">{avgRating.toFixed(1)}</span>
+          <div>
+            <StarRating value={Math.round(avgRating)} />
+            <p className="font-sans text-xs text-w-graphite mt-0.5">{reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Write review form */}
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-w-surface p-6 mb-8 space-y-4">
+          <h3 className="font-sans text-sm font-medium uppercase tracking-widest text-w-dark">Your Review</h3>
+          <div>
+            <p className="font-sans text-xs text-w-graphite mb-2 uppercase tracking-wider">Rating *</p>
+            <StarRating value={rating} onChange={setRating} />
+          </div>
+          <div>
+            <label className="font-sans text-xs text-w-graphite mb-1.5 uppercase tracking-wider block">Size Purchased</label>
+            <div className="flex gap-2">
+              {SIZES.map((s) => (
+                <button key={s} type="button" onClick={() => setSizePurchased(sizePurchased === s ? '' : s)}
+                  className={cn('font-sans text-xs px-3 py-1.5 border transition-colors', sizePurchased === s ? 'bg-w-dark text-white border-w-dark' : 'border-w-ghost text-w-graphite hover:border-w-dark')}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="font-sans text-xs text-w-graphite mb-1.5 uppercase tracking-wider block">Review (optional)</label>
+            <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)}
+              rows={4} maxLength={1000} placeholder="Share your thoughts about this product..."
+              className="w-full border border-w-ghost px-4 py-3 font-sans text-sm text-w-dark outline-none focus:border-w-dark resize-none" />
+            <p className="font-sans text-xs text-w-graphite mt-1 text-right">{reviewText.length}/1000</p>
+          </div>
+          <button type="submit" disabled={submitting}
+            className="font-sans text-xs uppercase tracking-widest bg-w-dark text-white px-8 py-3 hover:bg-w-forest transition-colors disabled:opacity-50">
+            {submitting ? 'Submitting…' : 'Submit Review'}
+          </button>
+        </form>
+      )}
+
+      {/* Reviews list */}
+      {reviews.length === 0 ? (
+        <p className="font-sans text-sm text-w-graphite">No reviews yet. Be the first!</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {reviews.map((r) => (
+            <div key={r.id} className="bg-w-surface p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <StarRating value={r.rating} />
+                  <span className="font-sans text-xs font-medium text-w-dark">{r.reviewer_name}</span>
+                </div>
+                {r.is_verified && (
+                  <span className="font-sans text-[10px] bg-w-forest text-white px-2 py-0.5 uppercase tracking-wider">Verified</span>
+                )}
+              </div>
+              {r.size_purchased && (
+                <p className="font-sans text-xs text-w-graphite mb-1">Size: {r.size_purchased}</p>
+              )}
+              {r.review_text && <p className="font-sans text-xs text-w-graphite leading-relaxed">{r.review_text}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Size Guide Modal ─────────────────────────────────────────────────────────
+
+function SizeGuideModal({ guide, onClose }: { guide: SizeGuideData; onClose: () => void }) {
+  const rows = guide.measurements?.rows ?? []
+  const columns = guide.measurements?.columns ?? []
+  const unit = guide.measurements?.unit ?? 'inches'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="font-serif text-xl text-w-dark">{guide.name}</h2>
+            {unit && <p className="font-sans text-xs text-w-graphite mt-0.5">Measurements in {unit}</p>}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-800 text-xl leading-none">✕</button>
+        </div>
+        <div className="p-6">
+          {guide.image_url ? (
+            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+              <Image src={guide.image_url} alt={guide.name} fill className="object-contain" />
+            </div>
+          ) : rows.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-xs uppercase tracking-widest text-gray-400">
+                    {columns.map((col) => (
+                      <th key={col} className="text-left px-3 py-2 capitalize">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                      {columns.map((col) => (
+                        <td key={col} className="px-3 py-2 text-w-dark font-sans">{row[col] ?? '—'}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">No measurement data available.</p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

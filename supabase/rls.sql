@@ -66,7 +66,7 @@ CREATE POLICY "Insert order items" ON order_items FOR INSERT WITH CHECK (TRUE);
 
 -- ─── REVIEWS ────────────────────────────────────────────
 CREATE POLICY "Public reads reviews" ON reviews FOR SELECT USING (TRUE);
-CREATE POLICY "Auth users write reviews" ON reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Auth users write reviews" ON reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = user_id);
 CREATE POLICY "Users update own reviews" ON reviews FOR UPDATE USING (auth.uid() = user_id OR is_admin());
 CREATE POLICY "Users delete own reviews" ON reviews FOR DELETE USING (auth.uid() = user_id OR is_admin());
 
@@ -74,7 +74,7 @@ CREATE POLICY "Users delete own reviews" ON reviews FOR DELETE USING (auth.uid()
 CREATE POLICY "Users access own wishlist" ON wishlist FOR ALL USING (auth.uid() = user_id);
 
 -- ─── DISCOUNT CODES ─────────────────────────────────────
-CREATE POLICY "Auth users validate discount codes" ON discount_codes FOR SELECT USING (auth.uid() IS NOT NULL OR TRUE);
+CREATE POLICY "Auth users validate discount codes" ON discount_codes FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "Admin manages discount codes" ON discount_codes FOR ALL USING (is_admin());
 
 -- ─── DISCOUNT CODE USAGE ────────────────────────────────

@@ -12,7 +12,7 @@ const discountBase = z.object({
   min_order_amount: z.number().min(0).optional().default(0),
   usage_limit: z.number().int().positive().optional().nullable(),
   per_user_limit: z.number().int().positive().optional().default(1),
-  expires_at: z.string().datetime().optional().nullable(),
+  expiry_date: z.string().datetime().optional().nullable(),
   is_active: z.boolean().optional().default(true),
 })
 

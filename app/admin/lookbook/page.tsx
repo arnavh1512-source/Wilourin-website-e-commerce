@@ -8,9 +8,9 @@ import { formatDate } from '@/lib/utils'
 
 interface Submission {
   id: string
-  image_url: string
-  handle: string | null
-  caption: string | null
+  photo_url: string
+  submitter_name: string
+  instagram_handle: string | null
   created_at: string
 }
 
@@ -28,8 +28,7 @@ export default function AdminLookbookPage() {
       const res = await fetch(`/api/admin/lookbook?${params.toString()}`)
       const data = await res.json()
       setSubmissions(Array.isArray(data) ? data : [])
-    } catch (err) {
-      console.error('[Lookbook] load threw:', err)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -71,11 +70,11 @@ export default function AdminLookbookPage() {
           {submissions.map((sub) => (
             <div key={sub.id} className="bg-white border border-gray-100 overflow-hidden group">
               <div className="aspect-square relative">
-                <Image src={sub.image_url} alt={sub.handle ?? 'submission'} fill className="object-cover" />
+                <Image src={sub.photo_url} alt={sub.submitter_name} fill className="object-cover" />
               </div>
               <div className="p-3">
-                <p className="font-medium text-sm">{sub.handle ?? 'Anonymous'}</p>
-                {sub.caption && <p className="text-xs text-gray-400 truncate">{sub.caption}</p>}
+                <p className="font-medium text-sm">{sub.submitter_name}</p>
+                {sub.instagram_handle && <p className="text-xs text-gray-400 truncate">@{sub.instagram_handle.replace(/^@/, '')}</p>}
                 <p className="text-xs text-gray-300 mt-1">{formatDate(sub.created_at)}</p>
                 {filter === 'Pending' && (
                   <div className="flex gap-2 mt-3">
