@@ -13,23 +13,23 @@ const config: Config = {
         foreground: "var(--foreground)",
         // Wilourin brand palette — dark concrete luxury
         brand: {
-          background:    '#222222',   // dark concrete wall
-          surface:       '#2C2C2C',   // slightly lighter for cards/panels
+          background:    '#828080',   // warm concrete gray (matching reference)
+          surface:       '#6E6C6C',   // slightly darker for cards/panels
           green:         '#1A5C35',   // deep forest green (like the velvet panels)
           'green-light': '#236B40',   // hover green
           dark:          '#141414',   // near black
-          gray:          '#909090',   // mid gray for secondary text
+          gray:          '#D4D0CC',   // light gray for secondary text on concrete
           beige:         '#C9B99A',   // warm cream accent
           white:         '#F5F0E8',   // warm off-white
         },
-        // w-* aliases → dark brand values (keeps all existing components working)
-        "w-bg":       '#222222',
-        "w-surface":  '#2C2C2C',
-        "w-graphite": '#909090',
+        // w-* aliases (keeps all existing components working)
+        "w-bg":       '#828080',
+        "w-surface":  '#6E6C6C',
+        "w-graphite": '#D4D0CC',
         "w-dark":     '#141414',
         "w-forest":   '#1A5C35',
         "w-emerald":  '#236B40',
-        "w-ghost":    '#3A3A3A',
+        "w-ghost":    '#5A5858',
         // legacy
         gold:         "#C9A84C",
         "off-white":  "#F5F0E8",

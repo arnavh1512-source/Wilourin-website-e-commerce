@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #222222;
+  --background: #828080;
   --foreground: #F5F0E8;
   --font-prata: 'Prata', Georgia, serif;
   --font-raleway: 'Raleway', system-ui, sans-serif;
@@ -34,11 +34,11 @@ h1, h2, h3 {
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #2C2C2C; }
+::-webkit-scrollbar-track { background: #6E6C6C; }
 ::-webkit-scrollbar-thumb { background: #1A5C35; border-radius: 2px; }
 
 .skeleton {
-  background: linear-gradient(90deg, #2C2C2C 25%, #363636 50%, #2C2C2C 75%);
+  background: linear-gradient(90deg, #757373 25%, #6E6C6C 50%, #757373 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
