@@ -168,7 +168,7 @@ export function Navbar() {
   return (
     <>
       <AnnouncementBar text={announcementText} loading={!announcementReady || !cityReady} />
-      <header className="sticky top-0 z-50 w-full transition-all duration-300 bg-brand-dark border-b border-white/10">
+      <header className="sticky top-0 z-50 w-full transition-all duration-300 bg-w-forest border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left — Nav links */}
@@ -248,7 +248,7 @@ export function Navbar() {
 
       {/* Mobile full-screen menu */}
       {menuOpen && (
-        <div ref={menuOverlayRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[60] bg-brand-dark flex flex-col animate-fade-in">
+        <div ref={menuOverlayRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[60] bg-w-forest flex flex-col animate-fade-in">
           <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
             <div className="flex flex-col leading-none">
               <span className="font-prata text-2xl tracking-[0.15em] uppercase text-white">Wilourin</span>
