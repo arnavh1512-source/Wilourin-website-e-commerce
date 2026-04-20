@@ -12,6 +12,11 @@ const TILES = [
     href: '/products?category=women',
     image: 'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80',
   },
+  {
+    label: 'Combo',
+    href: '/products?category=combo',
+    image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80',
+  },
 ]
 
 export function CategoryTiles() {
@@ -19,7 +24,7 @@ export function CategoryTiles() {
     <section className="bg-brand-background py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-prata text-white text-3xl mb-8">Shop by Category</h2>
-        <div className="grid grid-cols-2 gap-px bg-w-ghost">
+        <div className="grid grid-cols-3 gap-px bg-w-ghost">
           {TILES.map((tile) => (
             <Link
               key={tile.href}
