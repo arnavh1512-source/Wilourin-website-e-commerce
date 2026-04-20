@@ -42,6 +42,14 @@ export default async function ProductPage({ params }: Props) {
     .neq('id', product.id)
     .limit(4)
 
+  const { data: sizeGuide } = product.category_id
+    ? await supabase
+        .from('size_guides')
+        .select('id, name, image_url, measurements')
+        .eq('category_id', product.category_id)
+        .single()
+    : { data: null }
+
   const avgRating = reviews && reviews.length > 0
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0
@@ -52,6 +60,7 @@ export default async function ProductPage({ params }: Props) {
       reviews={reviews ?? []}
       related={related ?? []}
       avgRating={avgRating}
+      sizeGuide={sizeGuide ?? null}
     />
   )
 }
