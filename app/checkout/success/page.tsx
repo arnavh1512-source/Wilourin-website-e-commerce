@@ -9,14 +9,18 @@ import type { Order } from '@/lib/types'
 export default function OrderSuccessPage() {
   const sp = useSearchParams()
   const orderNumber = sp.get('order')
+  const token = sp.get('token')
   const [order, setOrder] = useState<Order | null>(null)
 
   useEffect(() => {
     if (!orderNumber) return
-    fetch(`/api/store/order?order_number=${encodeURIComponent(orderNumber)}`)
+    const url = token
+      ? `/api/store/order?order_number=${encodeURIComponent(orderNumber)}&token=${encodeURIComponent(token)}`
+      : `/api/store/order?order_number=${encodeURIComponent(orderNumber)}`
+    fetch(url)
       .then((r) => r.json())
       .then((data) => { if (data && !data.error) setOrder(data) })
-  }, [orderNumber])
+  }, [orderNumber, token])
 
   const deliveryDays = order?.shipping_method === 'Express' ? '2–3' : '5–7'
 

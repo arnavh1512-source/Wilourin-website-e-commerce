@@ -320,11 +320,12 @@ function WishlistTab() {
   }, [])
 
   const remove = async (id: string) => {
-    await fetch('/api/account/wishlist', {
+    const res = await fetch('/api/account/wishlist', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
+    if (!res.ok) return
     setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
@@ -416,21 +417,23 @@ function AddressesTab({ addToast }: { addToast: (m: string, t: any) => void }) {
   }
 
   const deleteAddr = async (id: string) => {
-    await fetch('/api/account/addresses', {
+    const res = await fetch('/api/account/addresses', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
+    if (!res.ok) { addToast('Failed to delete address', 'error'); return }
     setAddresses((prev) => prev.filter((a) => a.id !== id))
     addToast('Address deleted', 'success')
   }
 
   const setDefault = async (id: string) => {
-    await fetch('/api/account/addresses', {
+    const res = await fetch('/api/account/addresses', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
+    if (!res.ok) { addToast('Failed to update default address', 'error'); return }
     setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })))
     addToast('Default address updated', 'success')
   }

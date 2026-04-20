@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useWishlistStore, useCartStore, useToastStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+import { useWishlistStore, useToastStore } from '@/lib/store'
 import { formatPrice, calculateDiscountedPrice, cn } from '@/lib/utils'
 import type { WishlistProduct } from '@/lib/types'
 
@@ -29,8 +30,8 @@ export function ProductCard({
   id, name, slug, price, original_price, badge, primaryImage, secondaryImage, aspectRatio = '3/4',
 }: ProductCardProps) {
   const { isWishlisted, addItem: addWish, removeItem: removeWish } = useWishlistStore()
-  const addToCart = useCartStore((s) => s.addItem)
   const addToast = useToastStore((s) => s.addToast)
+  const router = useRouter()
   const wishlisted = isWishlisted(id)
   const discount = calculateDiscountedPrice(price, original_price)
 
@@ -48,21 +49,7 @@ export function ProductCard({
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
-    addToCart({
-      id,
-      product_id: id,
-      product_name: name,
-      product_slug: slug,
-      image_url: primaryImage,
-      size: 'M',
-      color_name: null,
-      color_hex: null,
-      price,
-      original_price,
-      quantity: 1,
-      stock_qty: 99,
-    })
-    addToast(`${name} added to cart`, 'success')
+    router.push(`/products/${slug}`)
   }
 
   return (
