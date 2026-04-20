@@ -18,7 +18,7 @@ export default function WishlistPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-20 bg-w-bg">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-20 bg-brand-background">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#C6C7D0" strokeWidth="1.5" className="mb-6">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </svg>
@@ -34,7 +34,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="bg-w-bg min-h-screen">
+    <div className="bg-brand-background min-h-screen">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10">
           <h1 className="font-serif text-w-dark text-4xl mb-1">Wishlist</h1>
@@ -78,7 +78,7 @@ export default function WishlistPage() {
                 </div>
                 <Link
                   href={`/products/${item.slug}`}
-                  className="flex items-center justify-center gap-1.5 bg-w-dark text-white font-sans text-xs uppercase tracking-widest py-2 hover:bg-w-forest transition-colors rounded-none"
+                  className="flex items-center justify-center gap-1.5 bg-w-forest text-white font-sans text-xs uppercase tracking-widest py-2 hover:bg-w-forest transition-colors rounded-none"
                 >
                   <ShoppingBag size={11} />
                   Select Size

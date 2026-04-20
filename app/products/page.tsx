@@ -95,7 +95,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     : badge ?? 'All Products'
 
   return (
-    <div className="bg-w-bg min-h-screen">
+    <div className="bg-brand-background min-h-screen">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
         <h1 className="font-serif text-w-dark text-4xl mb-1">{title}</h1>
@@ -103,7 +103,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       </div>
 
       {/* Horizontal filter pills */}
-      <div className="sticky top-16 z-30 bg-w-bg/95 backdrop-blur-sm border-b border-w-ghost">
+      <div className="sticky top-16 z-30 bg-brand-background/95 backdrop-blur-sm border-b border-w-ghost">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-none">
             {FILTER_PILLS.map((pill) => {
@@ -114,8 +114,8 @@ export default async function ProductsPage({ searchParams }: Props) {
                   href={pill.href}
                   className={`flex-shrink-0 font-sans text-xs tracking-widest uppercase px-4 py-2 rounded-none transition-colors ${
                     active
-                      ? 'bg-w-dark text-white'
-                      : 'border border-w-ghost text-w-graphite hover:border-w-dark hover:text-w-dark'
+                      ? 'bg-w-forest text-white'
+                      : 'border border-w-ghost text-w-graphite hover:border-white hover:text-white'
                   }`}
                 >
                   {pill.label}
@@ -132,7 +132,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                 className={`flex-shrink-0 font-sans text-xs tracking-widest uppercase px-3 py-2 rounded-none transition-colors ${
                   size === s
                     ? 'bg-w-forest text-white'
-                    : 'border border-w-ghost text-w-graphite hover:border-w-dark hover:text-w-dark'
+                    : 'border border-w-ghost text-w-graphite hover:border-white hover:text-white'
                 }`}
               >
                 {s}

@@ -161,7 +161,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
   const activeImage = images[activeImageIdx]?.image_url ?? ''
 
   return (
-    <div className="bg-w-bg min-h-screen">
+    <div className="bg-brand-background min-h-screen">
       {/* Mobile/Zara-style layout */}
       <div className="lg:hidden">
         {/* Image hero */}
@@ -204,7 +204,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
         </div>
 
         {/* Mobile product info */}
-        <div className="bg-w-bg px-4 pt-5 pb-24">
+        <div className="bg-brand-background px-4 pt-5 pb-24">
           {product.badge && (
             <p className="font-sans text-w-forest text-xs tracking-widest uppercase mb-2">{product.badge}</p>
           )}
@@ -253,7 +253,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
                     disabled={outOfStock}
                     className={cn(
                       'font-sans text-xs px-3 py-2 rounded-none transition-colors',
-                      selectedSize === size ? 'bg-w-dark text-white' : outOfStock ? 'border border-w-ghost text-w-ghost cursor-not-allowed line-through' : 'border border-w-ghost text-w-graphite hover:border-w-dark hover:text-w-dark'
+                      selectedSize === size ? 'bg-w-forest text-white' : outOfStock ? 'border border-w-ghost text-w-ghost cursor-not-allowed line-through' : 'border border-w-ghost text-w-graphite hover:border-white hover:text-white'
                     )}
                   >{size}</button>
                 )
@@ -266,7 +266,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
             onClick={handleAddToCart}
             className={cn(
               'w-full font-sans text-xs tracking-widest uppercase py-4 rounded-none transition-colors mb-4',
-              addedToCart ? 'bg-w-forest text-white' : 'border border-w-dark text-w-dark hover:bg-w-dark hover:text-white'
+              addedToCart ? 'bg-w-forest text-white' : 'border border-white/40 text-white hover:bg-w-forest hover:text-white'
             )}
           >
             {addedToCart ? 'ADDED ✓' : 'ADD TO BAG'}
@@ -279,7 +279,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={cn(
                     'font-sans text-xs tracking-widest uppercase py-3 px-3 -mb-px',
-                    activeTab === tab ? 'border-b-2 border-w-dark text-w-dark' : 'text-w-graphite hover:text-w-dark'
+                    activeTab === tab ? 'border-b-2 border-white/40 text-white' : 'text-w-graphite hover:text-w-dark'
                   )}
                 >{tab}</button>
               ))}
@@ -392,7 +392,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
                         disabled={outOfStock}
                         className={cn(
                           'relative font-sans text-xs px-3 py-2 rounded-none transition-colors',
-                          selectedSize === size ? 'bg-w-dark text-white' : outOfStock ? 'border border-w-ghost text-w-ghost cursor-not-allowed line-through' : 'border border-w-ghost text-w-graphite hover:border-w-dark hover:text-w-dark'
+                          selectedSize === size ? 'bg-w-forest text-white' : outOfStock ? 'border border-w-ghost text-w-ghost cursor-not-allowed line-through' : 'border border-w-ghost text-w-graphite hover:border-white hover:text-white'
                         )}
                       >
                         {size}
@@ -420,7 +420,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
                 onClick={handleAddToCart}
                 className={cn(
                   'w-full font-sans text-xs tracking-widest uppercase py-4 rounded-none transition-colors',
-                  addedToCart ? 'bg-w-forest text-white' : 'border border-w-dark text-w-dark hover:bg-w-dark hover:text-white'
+                  addedToCart ? 'bg-w-forest text-white' : 'border border-white/40 text-white hover:bg-w-forest hover:text-white'
                 )}
               >
                 {addedToCart ? 'ADDED ✓' : 'ADD TO BAG'}
@@ -433,7 +433,7 @@ export function ProductDetail({ product, reviews, related, avgRating, sizeGuide 
                     <button key={tab} onClick={() => setActiveTab(tab)}
                       className={cn(
                         'font-sans text-xs tracking-widest uppercase py-3 px-3 -mb-px',
-                        activeTab === tab ? 'border-b-2 border-w-dark text-w-dark' : 'text-w-graphite hover:text-w-dark'
+                        activeTab === tab ? 'border-b-2 border-white/40 text-white' : 'text-w-graphite hover:text-w-dark'
                       )}
                     >{tab}</button>
                   ))}
@@ -572,14 +572,14 @@ function ReviewsSection({ productId, initialReviews, initialAvg }: {
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-w-dark text-3xl">Reviews ({reviews.length})</h2>
         {!isLoggedIn ? (
-          <a href="/login" className="font-sans text-xs uppercase tracking-widest border border-w-dark text-w-dark px-4 py-2 hover:bg-w-dark hover:text-white transition-colors">
+          <a href="/login" className="font-sans text-xs uppercase tracking-widest border border-white/40 text-white px-4 py-2 hover:bg-w-forest hover:text-white transition-colors">
             Login to Write a Review
           </a>
         ) : hasReviewed ? (
           <span className="font-sans text-xs text-w-graphite">You&apos;ve reviewed this product</span>
         ) : (
           <button onClick={() => setShowForm(!showForm)}
-            className="font-sans text-xs uppercase tracking-widest border border-w-dark text-w-dark px-4 py-2 hover:bg-w-dark hover:text-white transition-colors">
+            className="font-sans text-xs uppercase tracking-widest border border-white/40 text-white px-4 py-2 hover:bg-w-forest hover:text-white transition-colors">
             {showForm ? 'Cancel' : 'Write a Review'}
           </button>
         )}
@@ -609,7 +609,7 @@ function ReviewsSection({ productId, initialReviews, initialAvg }: {
             <div className="flex gap-2">
               {SIZES.map((s) => (
                 <button key={s} type="button" onClick={() => setSizePurchased(sizePurchased === s ? '' : s)}
-                  className={cn('font-sans text-xs px-3 py-1.5 border transition-colors', sizePurchased === s ? 'bg-w-dark text-white border-w-dark' : 'border-w-ghost text-w-graphite hover:border-w-dark')}>
+                  className={cn('font-sans text-xs px-3 py-1.5 border transition-colors', sizePurchased === s ? 'bg-w-forest text-white border-w-dark' : 'border-w-ghost text-w-graphite hover:border-w-dark')}>
                   {s}
                 </button>
               ))}
@@ -623,7 +623,7 @@ function ReviewsSection({ productId, initialReviews, initialAvg }: {
             <p className="font-sans text-xs text-w-graphite mt-1 text-right">{reviewText.length}/1000</p>
           </div>
           <button type="submit" disabled={submitting}
-            className="font-sans text-xs uppercase tracking-widest bg-w-dark text-white px-8 py-3 hover:bg-w-forest transition-colors disabled:opacity-50">
+            className="font-sans text-xs uppercase tracking-widest bg-w-forest text-white px-8 py-3 hover:bg-w-forest transition-colors disabled:opacity-50">
             {submitting ? 'Submitting…' : 'Submit Review'}
           </button>
         </form>
@@ -666,7 +666,7 @@ function SizeGuideModal({ guide, onClose }: { guide: SizeGuideData; onClose: () 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-w-surface max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="font-serif text-xl text-w-dark">{guide.name}</h2>

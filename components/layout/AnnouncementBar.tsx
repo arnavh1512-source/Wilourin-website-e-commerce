@@ -25,12 +25,12 @@ export function AnnouncementBar({ text, loading }: AnnouncementBarProps) {
   }, [text])
 
   // M1: reserve height while data is still loading to prevent CLS
-  if (loading) return <div className="bg-w-dark h-[37px]" aria-hidden="true" />
-  if (!checked && text) return <div className="bg-w-dark h-[37px]" aria-hidden="true" />
+  if (loading) return <div className="bg-w-surface h-[37px]" aria-hidden="true" />
+  if (!checked && text) return <div className="bg-w-surface h-[37px]" aria-hidden="true" />
   if (!visible || !text) return null
 
   return (
-    <div className="bg-w-dark text-white text-xs text-center py-2.5 px-10 relative tracking-widest uppercase font-sans">
+    <div className="bg-w-surface text-white text-xs text-center py-2.5 px-10 relative tracking-widest uppercase font-sans">
       <span>{text}</span>
       <button
         onClick={() => {

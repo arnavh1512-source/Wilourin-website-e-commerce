@@ -91,7 +91,7 @@ export default function AccountPage() {
             {tabs.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex items-center gap-2.5 px-4 py-2.5 text-sm rounded-none text-left transition-colors w-full ${
-                  tab === t.id ? 'bg-[#0A0A0A] text-white' : 'text-gray-600 hover:bg-gray-100'
+                  tab === t.id ? 'bg-[#0A0A0A] text-white' : 'text-gray-600 hover:bg-w-surface'
                 }`}>
                 {t.icon} {t.label}
               </button>
@@ -176,7 +176,7 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
             {profile?.avatar_url ? (
               <Image src={profile.avatar_url} alt="Avatar" width={72} height={72} className="rounded-full object-cover w-18 h-18" />
             ) : (
-              <div className="w-[72px] h-[72px] rounded-full bg-gray-100 flex items-center justify-center text-xl font-serif text-gray-500">
+              <div className="w-[72px] h-[72px] rounded-full bg-w-surface flex items-center justify-center text-xl font-serif text-gray-500">
                 {getInitials(profile?.full_name ?? user.email)}
               </div>
             )}
@@ -225,8 +225,8 @@ const STATUS_COLOR: Record<string, string> = {
   Delivered: 'bg-green-50 text-green-700',
   Cancelled: 'bg-red-50 text-red-700',
   'Refund Requested': 'bg-orange-50 text-orange-700',
-  Refunded: 'bg-gray-100 text-gray-600',
-  Pending: 'bg-gray-100 text-gray-500',
+  Refunded: 'bg-w-surface text-gray-600',
+  Pending: 'bg-w-surface text-gray-500',
 }
 
 const STATUS_STEPS = ['Confirmed', 'Processing', 'Shipped', 'Delivered']
@@ -236,14 +236,14 @@ function OrderDetailModal({ order, onClose }: { order: OrderWithItems; onClose: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="bg-white max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-w-surface max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wider">Order</p>
             <p className="font-mono font-semibold">{order.order_number}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[order.order_status] ?? 'bg-gray-100 text-gray-600'}`}>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[order.order_status] ?? 'bg-w-surface text-gray-600'}`}>
               {order.order_status}
             </span>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-800 text-xl leading-none">✕</button>
@@ -255,14 +255,14 @@ function OrderDetailModal({ order, onClose }: { order: OrderWithItems; onClose: 
           {statusIdx >= 0 && !['Cancelled', 'Refund Requested', 'Refunded'].includes(order.order_status) && (
             <div>
               {/* Connector line behind circles */}
-              <div className="relative h-1 bg-gray-100 mx-3 mb-4">
+              <div className="relative h-1 bg-w-surface mx-3 mb-4">
                 <div className="absolute left-0 top-0 h-full bg-[#0A0A0A] transition-all"
                   style={{ width: `${(statusIdx / (STATUS_STEPS.length - 1)) * 100}%` }} />
               </div>
               <div className="flex items-start justify-between">
                 {STATUS_STEPS.map((s, i) => (
                   <div key={s} className="flex-1 flex flex-col items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${i <= statusIdx ? 'bg-[#0A0A0A] text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${i <= statusIdx ? 'bg-[#0A0A0A] text-white' : 'bg-w-surface text-gray-400'}`}>
                       {i < statusIdx ? '✓' : i + 1}
                     </div>
                     <p className={`text-[10px] text-center ${i === statusIdx ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{s}</p>
@@ -380,7 +380,7 @@ function OrdersTab() {
                 </div>
               )}
             </div>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${STATUS_COLOR[order.order_status] ?? 'bg-gray-100 text-gray-600'}`}>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${STATUS_COLOR[order.order_status] ?? 'bg-w-surface text-gray-600'}`}>
               {order.order_status}
             </span>
           </div>
@@ -433,7 +433,7 @@ function WishlistTab() {
           return (
             <div key={item.id} className="group relative">
               <Link href={`/products/${product?.slug}`}>
-                <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-2">
+                <div className="relative aspect-[3/4] bg-w-surface overflow-hidden mb-2">
                   {img && <Image src={img} alt={product?.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />}
                 </div>
                 <p className="text-sm font-medium truncate">{product?.name}</p>

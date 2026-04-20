@@ -79,7 +79,7 @@ export function ProductCard({
         {badge && badge !== 'Sale' ? (
           <span className={cn(
             'absolute top-3 left-3 font-sans text-xs px-2 py-0.5 tracking-wider uppercase',
-            BADGE_STYLES[badge] ?? 'bg-w-dark text-white'
+            BADGE_STYLES[badge] ?? 'bg-w-surface text-white'
           )}>
             {badge === 'New Arrival' ? 'New' : badge}
           </span>
@@ -106,7 +106,7 @@ export function ProductCard({
         </button>
 
         {/* Quick view overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-w-dark/80 text-white font-sans text-xs tracking-widest uppercase text-center py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 bg-w-surface/80 text-white font-sans text-xs tracking-widest uppercase text-center py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           Quick View
         </div>
       </div>

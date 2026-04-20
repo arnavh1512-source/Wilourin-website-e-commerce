@@ -31,7 +31,7 @@ const TILES = [
 
 export function CategoryTiles() {
   return (
-    <section className="bg-w-bg py-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-brand-background py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-serif text-w-dark text-3xl mb-8">Shop by Category</h2>
         <div className="flex gap-px overflow-x-auto lg:grid lg:grid-cols-5 bg-w-ghost">

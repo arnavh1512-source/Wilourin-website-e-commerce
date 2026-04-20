@@ -89,7 +89,7 @@ export function LookbookClient({ submissions }: Props) {
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
           {submissions.map((sub) => (
-            <div key={sub.id} className="group break-inside-avoid relative overflow-hidden bg-gray-100 rounded-sm">
+            <div key={sub.id} className="group break-inside-avoid relative overflow-hidden bg-w-surface rounded-sm">
               <div className="relative aspect-[3/4]">
                 <Image
                   src={sub.photo_url}
@@ -117,7 +117,7 @@ export function LookbookClient({ submissions }: Props) {
       {/* Submit form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 drawer-backdrop">
-          <div className="bg-white rounded-lg w-full max-w-md shadow-2xl animate-slide-up">
+          <div className="bg-w-surface rounded-lg w-full max-w-md shadow-2xl animate-slide-up">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="font-serif text-2xl">Submit Your Look</h2>
               <button onClick={() => setShowForm(false)} aria-label="Close"><X size={20} /></button>

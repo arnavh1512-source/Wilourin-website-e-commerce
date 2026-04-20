@@ -9,7 +9,7 @@ const BADGES = [
 
 export function TrustBadges() {
   return (
-    <section className="py-10 bg-w-dark">
+    <section className="py-10 bg-w-surface">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {BADGES.map((badge) => (

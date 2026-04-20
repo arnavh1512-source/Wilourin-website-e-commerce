@@ -23,7 +23,7 @@ export function CommunityFeed({ submissions }: CommunityFeedProps) {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {submissions.slice(0, 8).map((sub) => (
-            <div key={sub.id} className="group relative aspect-square overflow-hidden bg-gray-100">
+            <div key={sub.id} className="group relative aspect-square overflow-hidden bg-w-surface">
               <Image
                 src={sub.photo_url}
                 alt={sub.submitter_name}

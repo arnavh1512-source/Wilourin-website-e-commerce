@@ -2,7 +2,7 @@ import { MessageCircle } from 'lucide-react'
 
 export function NewsletterStrip() {
   return (
-    <section className="py-20 bg-brand-dark text-white">
+    <section className="py-20 bg-w-surface text-white">
       <div className="max-w-2xl mx-auto px-4 text-center">
         <p className="font-raleway text-xs uppercase tracking-[0.4em] text-white/40 mb-4">Stay Updated</p>
         <h2 className="font-prata text-4xl sm:text-5xl text-white mb-4">Get Exclusive Updates</h2>
