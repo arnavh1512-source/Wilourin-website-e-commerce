@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   LayoutDashboard, Package, Tag, Image, Ruler,
   ShoppingBag, Users, Percent, Star, Home, BookOpen,
-  Settings, Bot, LogOut, Menu, X
+  Settings, Bot, LogOut, Menu, X, MessageSquare, Mail, Clock
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -17,9 +17,12 @@ const NAV = [
   { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/discounts', label: 'Discounts', icon: Percent },
   { href: '/admin/loyalty', label: 'Loyalty', icon: Star },
+  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
   { href: '/admin/lookbook', label: 'Lookbook', icon: BookOpen },
+  { href: '/admin/newsletter', label: 'Newsletter', icon: Mail },
   { href: '/admin/media', label: 'Media', icon: Image },
   { href: '/admin/size-guides', label: 'Size Guides', icon: Ruler },
+  { href: '/admin/recently-viewed', label: 'Recently Viewed', icon: Clock },
   { href: '/admin/homepage', label: 'Homepage', icon: Home },
   { href: '/admin/advisor', label: 'AI Advisor', icon: Bot },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
@@ -81,7 +84,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <Menu size={20} />
           </button>
           <span className="text-sm text-gray-400 capitalize">
-            {NAV.find((n) => n.href === '/admin' ? pathname === '/admin' : pathname.startsWith(n.href))?.label ?? 'Admin'}
+            {NAV.find((n) => n.href === '/admin' ? pathname === '/admin' : pathname.startsWith(n.href))?.label ?? pathname.split('/').pop() ?? 'Admin'}
           </span>
         </header>
 

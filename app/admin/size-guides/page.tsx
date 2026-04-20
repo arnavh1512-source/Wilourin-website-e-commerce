@@ -16,8 +16,7 @@ interface SizeGuide {
   id: string
   name: string
   category_id: string | null
-  unit: string
-  measurements: { rows: MeasurementRow[]; columns: string[] } | null
+  measurements: { rows: MeasurementRow[]; columns: string[]; unit?: string } | null
   categories: { name: string } | null
 }
 
@@ -64,7 +63,7 @@ export default function AdminSizeGuidesPage() {
 
   const openEdit = (g: SizeGuide) => {
     setEditing(g)
-    setForm({ name: g.name, category_id: g.category_id ?? '', unit: g.unit ?? 'inches' })
+    setForm({ name: g.name, category_id: g.category_id ?? '', unit: g.measurements?.unit ?? 'inches' })
     const tableData: MeasurementRow[] = g.measurements?.rows ?? []
     setRows(tableData.length ? tableData : [{ size: '', chest: '', waist: '', hips: '', length: '' }])
     setShowForm(true)
@@ -80,24 +79,25 @@ export default function AdminSizeGuidesPage() {
     const data = {
       name: form.name,
       category_id: form.category_id || null,
-      unit: form.unit,
-      measurements: { rows, columns: ['size', 'chest', 'waist', 'hips', 'length'] },
+      measurements: { rows, columns: ['size', 'chest', 'waist', 'hips', 'length'], unit: form.unit },
     }
 
     try {
       if (editing) {
-        await fetch('/api/admin/size-guides', {
+        const res = await fetch('/api/admin/size-guides', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editing.id, ...data }),
         })
+        if (!res.ok) { const e = await res.json().catch(() => ({})); addToast(e.error ?? 'Update failed', 'error'); return }
         addToast('Size guide updated', 'success')
       } else {
-        await fetch('/api/admin/size-guides', {
+        const res = await fetch('/api/admin/size-guides', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         })
+        if (!res.ok) { const e = await res.json().catch(() => ({})); addToast(e.error ?? 'Create failed', 'error'); return }
         addToast('Size guide created', 'success')
       }
       setShowForm(false)
@@ -217,7 +217,7 @@ export default function AdminSizeGuidesPage() {
                 <tr key={g.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{g.name}</td>
                   <td className="px-4 py-3 text-gray-500">{g.categories?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{g.unit}</td>
+                  <td className="px-4 py-3 text-gray-500">{g.measurements?.unit ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{g.measurements?.rows?.length ?? 0} sizes</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">

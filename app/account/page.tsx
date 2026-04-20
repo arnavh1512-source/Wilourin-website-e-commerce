@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   User, Package, Heart, MapPin, Star, LogOut,
-  ChevronDown, ChevronUp, Plus, Pencil, Trash2,
+  Plus, Pencil, Trash2,
   Upload, Crown
 } from 'lucide-react'
 import { useToastStore } from '@/lib/store'
@@ -218,10 +218,123 @@ function ProfileTab({ user, profile, setProfile, addToast }: {
 
 // ── Orders Tab ───────────────────────────────────────────────────────────────
 
+const STATUS_COLOR: Record<string, string> = {
+  Confirmed: 'bg-blue-50 text-blue-700',
+  Processing: 'bg-yellow-50 text-yellow-700',
+  Shipped: 'bg-purple-50 text-purple-700',
+  Delivered: 'bg-green-50 text-green-700',
+  Cancelled: 'bg-red-50 text-red-700',
+  'Refund Requested': 'bg-orange-50 text-orange-700',
+  Refunded: 'bg-gray-100 text-gray-600',
+  Pending: 'bg-gray-100 text-gray-500',
+}
+
+const STATUS_STEPS = ['Confirmed', 'Processing', 'Shipped', 'Delivered']
+
+function OrderDetailModal({ order, onClose }: { order: OrderWithItems; onClose: () => void }) {
+  const statusIdx = STATUS_STEPS.indexOf(order.order_status)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="bg-white max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wider">Order</p>
+            <p className="font-mono font-semibold">{order.order_number}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[order.order_status] ?? 'bg-gray-100 text-gray-600'}`}>
+              {order.order_status}
+            </span>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-800 text-xl leading-none">✕</button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Progress tracker */}
+          {statusIdx >= 0 && !['Cancelled', 'Refund Requested', 'Refunded'].includes(order.order_status) && (
+            <div>
+              {/* Connector line behind circles */}
+              <div className="relative h-1 bg-gray-100 mx-3 mb-4">
+                <div className="absolute left-0 top-0 h-full bg-[#0A0A0A] transition-all"
+                  style={{ width: `${(statusIdx / (STATUS_STEPS.length - 1)) * 100}%` }} />
+              </div>
+              <div className="flex items-start justify-between">
+                {STATUS_STEPS.map((s, i) => (
+                  <div key={s} className="flex-1 flex flex-col items-center">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${i <= statusIdx ? 'bg-[#0A0A0A] text-white' : 'bg-gray-100 text-gray-400'}`}>
+                      {i < statusIdx ? '✓' : i + 1}
+                    </div>
+                    <p className={`text-[10px] text-center ${i === statusIdx ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{s}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tracking */}
+          {order.tracking_number && (
+            <div className="bg-purple-50 border border-purple-100 px-4 py-3 rounded">
+              <p className="text-xs text-purple-500 uppercase tracking-wider mb-1">Tracking Number</p>
+              <p className="font-mono text-sm font-semibold text-purple-800">{order.tracking_number}</p>
+              <p className="text-xs text-purple-400 mt-0.5">Via {order.shipping_method} Shipping</p>
+            </div>
+          )}
+
+          {/* Order meta */}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Placed On</p>
+              <p className="text-gray-800">{formatDate(order.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Shipping</p>
+              <p className="text-gray-800">{order.shipping_method}</p>
+            </div>
+            {order.promo_code && (
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Promo Code</p>
+                <p className="font-mono text-gray-800">{order.promo_code}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Items */}
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Items</p>
+            <div className="space-y-3">
+              {order.order_items?.map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  {item.product_image && (
+                    <Image src={item.product_image} alt={item.product_name} width={52} height={52} className="object-cover flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.product_name}</p>
+                    <p className="text-xs text-gray-400">{item.size}{item.color_name ? ` · ${item.color_name}` : ''} · Qty {item.quantity}</p>
+                  </div>
+                  <p className="text-sm font-semibold shrink-0">₹{item.total_price}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Totals */}
+          <div className="border-t border-gray-100 pt-4 space-y-1.5 text-sm">
+            <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>₹{order.subtotal}</span></div>
+            {order.discount_amount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-₹{order.discount_amount}</span></div>}
+            <div className="flex justify-between text-gray-500"><span>Shipping</span><span>₹{order.shipping_cost}</span></div>
+            <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2 mt-2"><span>Total</span><span>₹{order.total}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OrdersTab() {
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
-  const [expanded, setExpanded] = useState<string | null>(null)
+  const [selected, setSelected] = useState<OrderWithItems | null>(null)
 
   useEffect(() => {
     fetch('/api/account/orders')
@@ -229,16 +342,6 @@ function OrdersTab() {
       .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
-
-  const statusColor: Record<string, string> = {
-    Confirmed: 'bg-blue-50 text-blue-700',
-    Processing: 'bg-yellow-50 text-yellow-700',
-    Shipped: 'bg-purple-50 text-purple-700',
-    Delivered: 'bg-green-50 text-green-700',
-    Cancelled: 'bg-red-50 text-red-700',
-    'Refund Requested': 'bg-orange-50 text-orange-700',
-    Refunded: 'bg-gray-100 text-gray-600',
-  }
 
   if (loading) return <div className="h-48 flex items-center justify-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" /></div>
   if (!orders.length) return (
@@ -251,12 +354,13 @@ function OrdersTab() {
 
   return (
     <div className="space-y-4">
+      {selected && <OrderDetailModal order={selected} onClose={() => setSelected(null)} />}
       <h2 className="font-serif text-2xl mb-6">My Orders</h2>
       {orders.map((order) => (
-        <div key={order.id} className="border border-gray-100">
-          <button onClick={() => setExpanded(expanded === order.id ? null : order.id)}
-            className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left">
-            <div className="flex items-center gap-6">
+        <button key={order.id} onClick={() => setSelected(order)}
+          className="w-full border border-gray-100 hover:border-gray-300 transition-colors text-left">
+          <div className="flex items-center justify-between px-5 py-4">
+            <div className="flex items-center gap-6 flex-wrap">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Order</p>
                 <p className="font-mono text-sm font-semibold">{order.order_number}</p>
@@ -269,38 +373,18 @@ function OrdersTab() {
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Total</p>
                 <p className="text-sm font-semibold">₹{order.total}</p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColor[order.order_status] ?? 'bg-gray-100 text-gray-600'}`}>
-                {order.order_status}
-              </span>
-              {expanded === order.id ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-            </div>
-          </button>
-
-          {expanded === order.id && (
-            <div className="border-t border-gray-100 px-5 py-4 space-y-3">
-              {order.order_items?.map((item) => (
-                <div key={item.id} className="flex items-center gap-4">
-                  {item.product_image && (
-                    <Image src={item.product_image} alt={item.product_name} width={56} height={56} className="object-cover" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.product_name}</p>
-                    <p className="text-xs text-gray-400">{item.size} · {item.color_name} · Qty {item.quantity}</p>
-                  </div>
-                  <p className="text-sm font-semibold shrink-0">₹{item.total_price}</p>
+              {order.tracking_number && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Tracking</p>
+                  <p className="font-mono text-xs text-purple-700">{order.tracking_number}</p>
                 </div>
-              ))}
-              <div className="pt-3 border-t border-gray-100 flex justify-between text-sm">
-                <span className="text-gray-500">Shipping: {order.shipping_method}</span>
-                {order.tracking_number && (
-                  <span className="text-gray-500">Tracking: <span className="font-mono text-gray-800">{order.tracking_number}</span></span>
-                )}
-              </div>
+              )}
             </div>
-          )}
-        </div>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${STATUS_COLOR[order.order_status] ?? 'bg-gray-100 text-gray-600'}`}>
+              {order.order_status}
+            </span>
+          </div>
+        </button>
       ))}
     </div>
   )
@@ -345,7 +429,7 @@ function WishlistTab() {
         {items.map((item) => {
           const product = item.products
           const img = product?.product_images?.find((i: any) => i.is_primary)?.image_url
-          const price = product?.original_price ?? product?.price
+          const price = product?.price
           return (
             <div key={item.id} className="group relative">
               <Link href={`/products/${product?.slug}`}>

@@ -15,11 +15,10 @@ export default function AdminLoyaltyPage() {
     const run = async () => {
       try {
         const res = await fetch('/api/admin/loyalty')
+        if (!res.ok) return
         const data = await res.json()
         setSettings(data.settings)
         setTransactions(data.transactions ?? [])
-      } catch (err) {
-        console.error('[Loyalty] load threw:', err)
       } finally {
         setLoading(false)
       }

@@ -67,18 +67,20 @@ export default function AdminDiscountsPage() {
 
     try {
       if (editing) {
-        await fetch('/api/admin/discounts', {
+        const res = await fetch('/api/admin/discounts', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editing.id, ...data }),
         })
+        if (!res.ok) { const e = await res.json().catch(() => ({})); addToast(e.error ?? 'Update failed', 'error'); return }
         addToast('Discount updated', 'success')
       } else {
-        await fetch('/api/admin/discounts', {
+        const res = await fetch('/api/admin/discounts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         })
+        if (!res.ok) { const e = await res.json().catch(() => ({})); addToast(e.error ?? 'Create failed', 'error'); return }
         addToast('Discount created', 'success')
       }
       setShowForm(false)
@@ -106,11 +108,12 @@ export default function AdminDiscountsPage() {
   }
 
   const toggleActive = async (id: string, current: boolean) => {
-    await fetch('/api/admin/discounts', {
+    const res = await fetch('/api/admin/discounts', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, is_active: !current }),
     })
+    if (!res.ok) { addToast('Failed to update status', 'error'); return }
     setCodes((prev) => prev.map((c) => c.id === id ? { ...c, is_active: !current } : c))
   }
 
