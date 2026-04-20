@@ -104,7 +104,7 @@ export function LookbookClient({ submissions }: Props) {
                   <p className="text-sm font-medium">{sub.submitter_name}</p>
                   {sub.instagram_handle && (
                     <p className="text-xs text-white/70 flex items-center gap-1 mt-0.5">
-                      <InstagramIcon />@{sub.instagram_handle}
+                      <InstagramIcon />@{sub.instagram_handle.replace(/^@/, '')}
                     </p>
                   )}
                 </div>

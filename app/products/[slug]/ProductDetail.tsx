@@ -362,7 +362,7 @@ export function ProductDetail({ product, reviews, related, avgRating }: Props) {
                 <div className="flex items-center border border-w-ghost">
                   <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-2 text-w-dark hover:bg-w-surface transition-colors">−</button>
                   <span className="px-4 py-2 font-sans text-sm text-w-dark">{qty}</span>
-                  <button onClick={() => setQty(qty + 1)} className="px-3 py-2 text-w-dark hover:bg-w-surface transition-colors">+</button>
+                  <button onClick={() => setQty(Math.min(qty + 1, selectedVariant?.stock_qty ?? qty + 1))} disabled={selectedVariant ? qty >= selectedVariant.stock_qty : false} className="px-3 py-2 text-w-dark hover:bg-w-surface transition-colors disabled:opacity-30">+</button>
                 </div>
               </div>
 

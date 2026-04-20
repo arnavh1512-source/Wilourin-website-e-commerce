@@ -63,8 +63,11 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Check per-user limit for logged-in users
+    // Check per-user limit
     const { data: { user } } = await supabase.auth.getUser()
+    if (discount.per_user_limit > 0 && !user) {
+      return NextResponse.json({ valid: false, message: 'Please log in to use this promo code' })
+    }
     if (user) {
       const { count } = await admin
         .from('discount_code_usage')

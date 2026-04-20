@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getIP, tooManyRequests } from '@/lib/rate-limit'
 
 const schema = z.object({
@@ -11,14 +11,6 @@ const schema = z.object({
     content: z.string().min(1).max(4000),
   })).min(1).max(50),
 })
-
-function createAdminClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-}
 
 export async function POST(req: NextRequest) {
   // 30 requests per 15 minutes per IP (admin tool, generous limit)
