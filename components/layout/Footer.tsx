@@ -36,8 +36,11 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
         {/* Brand */}
         <div className="space-y-4">
-          <h3 className="font-serif text-3xl tracking-[0.15em] uppercase text-white">Wilourin</h3>
-          <p className="font-sans text-white/70 text-sm leading-relaxed">
+          <div>
+            <h3 className="font-prata text-3xl tracking-[0.15em] uppercase text-white">Wilourin</h3>
+            <p className="font-raleway text-[9px] tracking-[0.35em] uppercase text-white/40 mt-0.5">Regal Reimagine</p>
+          </div>
+          <p className="font-raleway text-white/70 text-sm leading-relaxed">
             Premium Indian streetwear crafted for the bold and fearless. Dress the streets.
           </p>
           <div className="flex gap-4 pt-2">

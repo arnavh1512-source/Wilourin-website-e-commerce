@@ -76,22 +76,19 @@ export function ProductCard({
           />
         )}
 
-        {/* Badge */}
-        {badge && (
+        {/* Badge — takes priority; discount shown only when no badge */}
+        {badge ? (
           <span className={cn(
             'absolute top-3 left-3 font-sans text-xs px-2 py-0.5 tracking-wider uppercase',
             BADGE_STYLES[badge] ?? 'bg-w-dark text-white'
           )}>
             {badge === 'New Arrival' ? 'New' : badge}
           </span>
-        )}
-
-        {/* Discount */}
-        {discount > 0 && (
+        ) : discount > 0 ? (
           <span className="absolute top-3 left-3 font-sans text-xs text-white bg-w-forest px-2 py-0.5">
             -{discount}%
           </span>
-        )}
+        ) : null}
 
         {/* Quick-add + button */}
         <button
@@ -121,14 +118,14 @@ export function ProductCard({
 
       {/* Info */}
       <div className="p-3 space-y-1">
-        <p className="font-sans text-xs font-medium text-w-dark tracking-wide uppercase line-clamp-1">{name}</p>
+        <p className="font-prata text-sm text-brand-dark tracking-wide line-clamp-1">{name}</p>
         <div className="flex items-center gap-2">
-          <span className="font-sans text-xs text-w-graphite">{formatPrice(price)}</span>
+          <span className="font-raleway text-xs text-brand-gray">{formatPrice(price)}</span>
           {original_price && original_price > price && (
-            <span className="font-sans text-xs text-w-graphite line-through opacity-60">{formatPrice(original_price)}</span>
+            <span className="font-raleway text-xs text-brand-gray line-through opacity-60">{formatPrice(original_price)}</span>
           )}
           {original_price && original_price > price && (
-            <span className="font-sans text-xs text-w-forest">{formatPrice(original_price - price)} off</span>
+            <span className="font-raleway text-xs text-brand-green">{formatPrice(original_price - price)} off</span>
           )}
         </div>
       </div>

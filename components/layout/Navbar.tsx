@@ -211,9 +211,14 @@ export function Navbar() {
             {/* Center — Logo */}
             <Link
               href="/"
-              className={cn('absolute left-1/2 -translate-x-1/2 font-serif text-2xl tracking-[0.15em] uppercase', dark ? 'text-white' : 'text-w-dark')}
+              className="absolute left-1/2 -translate-x-1/2 text-center flex flex-col items-center leading-none"
             >
-              Wilourin
+              <span className={cn('font-prata text-2xl tracking-[0.15em] uppercase', dark ? 'text-white' : 'text-brand-dark')}>
+                Wilourin
+              </span>
+              <span className={cn('font-raleway text-[8px] tracking-[0.35em] uppercase mt-0.5', dark ? 'text-white/50' : 'text-brand-gray')}>
+                Regal Reimagine
+              </span>
             </Link>
 
             {/* Right — Icons */}
@@ -263,7 +268,10 @@ export function Navbar() {
       {menuOpen && (
         <div ref={menuOverlayRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[60] bg-w-bg flex flex-col animate-fade-in">
           <div className="flex items-center justify-between px-6 py-5 border-b border-w-ghost">
-            <span className="font-serif text-2xl tracking-[0.15em] uppercase text-w-dark">Wilourin</span>
+            <div className="flex flex-col leading-none">
+              <span className="font-prata text-2xl tracking-[0.15em] uppercase text-brand-dark">Wilourin</span>
+              <span className="font-raleway text-[8px] tracking-[0.35em] uppercase text-brand-gray mt-0.5">Regal Reimagine</span>
+            </div>
             <button ref={closeMenuBtnRef} onClick={() => setMenuOpen(false)} className="text-w-dark" aria-label="Close menu"><X size={24} /></button>
           </div>
           <nav className="flex flex-col gap-1 p-6 flex-1">

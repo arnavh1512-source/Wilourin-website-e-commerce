@@ -6,9 +6,12 @@ import { z } from 'zod'
 const homepageSchema = z.object({
   hero_title: z.string().max(500).optional(),
   hero_subtitle: z.string().max(1000).optional(),
+  hero_headline: z.string().max(500).optional(),
+  hero_subtext: z.string().max(1000).optional(),
   hero_cta_text: z.string().max(200).optional(),
   hero_cta_link: z.string().max(500).optional(),
   hero_image_url: z.string().max(1000).optional(),
+  hero_video_url: z.string().url().max(2000).optional().nullable(),
   featured_category_ids: z.array(z.string()).optional(),
   featured_product_ids: z.array(z.string()).optional(),
   announcement_text: z.string().max(500).optional(),

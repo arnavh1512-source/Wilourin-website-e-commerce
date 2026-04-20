@@ -15,12 +15,11 @@ export default function AdminHomepagePage() {
     const run = async () => {
       try {
         const res = await fetch('/api/admin/homepage')
+        if (!res.ok) return
         const data = await res.json()
         setSettings(data.settings ?? {})
         setProducts(data.products ?? [])
         setCategories(data.categories ?? [])
-      } catch (err) {
-        console.error('[Homepage] load threw:', err)
       } finally {
         setLoading(false)
       }
@@ -38,6 +37,7 @@ export default function AdminHomepagePage() {
         hero_headline: settings.hero_headline,
         hero_subtext: settings.hero_subtext,
         hero_image_url: settings.hero_image_url,
+        hero_video_url: settings.hero_video_url ?? null,
         featured_product_ids: settings.featured_product_ids,
         featured_category_ids: settings.featured_category_ids,
       }),
@@ -99,6 +99,13 @@ export default function AdminHomepagePage() {
             onChange={(e) => setSettings((p: any) => ({ ...p, hero_image_url: e.target.value }))}
             placeholder="https://..."
             className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400 font-mono text-xs" />
+        </Field>
+        <Field label="Hero Video URL (MP4 — overrides default video)">
+          <input value={settings.hero_video_url ?? ''}
+            onChange={(e) => setSettings((p: any) => ({ ...p, hero_video_url: e.target.value || null }))}
+            placeholder="https://videos.pexels.com/... or any .mp4 URL"
+            className="w-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400 font-mono text-xs" />
+          <p className="text-xs text-gray-400 mt-1">Leave blank to use /hero.mp4 from the server. Paste any public MP4 URL to override.</p>
         </Field>
       </div>
 

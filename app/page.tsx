@@ -65,6 +65,7 @@ export default async function HomePage() {
         headline={(settings?.hero_headline as string) ?? null}
         subtext={(settings?.hero_subtext as string) ?? null}
         imageUrl={(settings?.hero_image_url as string) ?? null}
+        videoUrl={(settings?.hero_video_url as string) ?? null}
       />
       <TrustBadges />
       <CategoryTiles />

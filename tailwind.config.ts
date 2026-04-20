@@ -11,22 +11,35 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        // Legacy (keep for admin panel)
-        gold: "#C9A84C",
-        "off-white": "#F5F5F0",
-        charcoal: "#1A1A1A",
-        // Wilourin design system
-        "w-bg":      "#E2E2E2",
-        "w-surface": "#CECECE",
-        "w-graphite":"#787878",
-        "w-dark":    "#1A1A1A",
-        "w-forest":  "#1B4332",
-        "w-emerald": "#2D6A4F",
-        "w-ghost":   "#C6C7D0",
+        // Wilourin brand palette
+        brand: {
+          background:   '#E8E4DC',
+          surface:      '#F5F2ED',
+          green:        '#2C5F3E',
+          'green-light':'#3D7A52',
+          dark:         '#1A1A1A',
+          gray:         '#6B6B6B',
+          beige:        '#C9B99A',
+          white:        '#FFFFFF',
+        },
+        // w-* aliases → new brand values (keeps all existing components working)
+        "w-bg":       '#E8E4DC',
+        "w-surface":  '#F5F2ED',
+        "w-graphite": '#6B6B6B',
+        "w-dark":     '#1A1A1A',
+        "w-forest":   '#2C5F3E',
+        "w-emerald":  '#3D7A52',
+        "w-ghost":    '#C9B99A',
+        // legacy
+        gold:         "#C9A84C",
+        "off-white":  "#F5F5F0",
+        charcoal:     "#1A1A1A",
       },
       fontFamily: {
-        serif: ["Cormorant Garamond", "var(--font-cormorant)", "Georgia", "serif"],
-        sans:  ["Inter", "var(--font-inter)", "system-ui", "sans-serif"],
+        serif:   ["Prata", "var(--font-prata)", "Georgia", "serif"],
+        sans:    ["Raleway", "var(--font-raleway)", "system-ui", "sans-serif"],
+        prata:   ["Prata", "var(--font-prata)", "Georgia", "serif"],
+        raleway: ["Raleway", "var(--font-raleway)", "system-ui", "sans-serif"],
       },
       animation: {
         "fade-in":       "fadeIn 0.3s ease-in-out",
