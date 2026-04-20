@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #E8E4DC;
-  --foreground: #1A1A1A;
+  --background: #222222;
+  --foreground: #F5F0E8;
   --font-prata: 'Prata', Georgia, serif;
   --font-raleway: 'Raleway', system-ui, sans-serif;
 }
@@ -34,11 +34,11 @@ h1, h2, h3 {
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #C9B99A; }
-::-webkit-scrollbar-thumb { background: #2C5F3E; border-radius: 2px; }
+::-webkit-scrollbar-track { background: #2C2C2C; }
+::-webkit-scrollbar-thumb { background: #1A5C35; border-radius: 2px; }
 
 .skeleton {
-  background: linear-gradient(90deg, #D9D4CB 25%, #CEC9C0 50%, #D9D4CB 75%);
+  background: linear-gradient(90deg, #2C2C2C 25%, #363636 50%, #2C2C2C 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -50,7 +50,7 @@ h1, h2, h3 {
 }
 .product-image-wrap:hover img.secondary { opacity: 1; }
 
-:focus-visible { outline: 2px solid #2C5F3E; outline-offset: 2px; }
+:focus-visible { outline: 2px solid #1A5C35; outline-offset: 2px; }
 
 .drawer-backdrop {
   backdrop-filter: blur(2px);
@@ -63,4 +63,3 @@ h1, h2, h3 {
 @layer utilities {
   .text-balance { text-wrap: balance; }
 }
-

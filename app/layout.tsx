@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${prata.variable} ${raleway.variable}`}>
-      <body className="bg-brand-background text-brand-dark antialiased">
+      <body className="bg-brand-background text-brand-white antialiased">
         <Providers>
           <Suspense fallback={null}><Navbar /></Suspense>
           <main className="min-h-screen">{children}</main>

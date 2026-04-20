@@ -160,9 +160,6 @@ export function Navbar() {
   const isAdminRoute = pathname.startsWith('/admin')
   if (isAdminRoute) return null
 
-  // M4: dark only on homepage — evaluated per render so it tracks navigation correctly
-  const dark = pathname === '/'
-
   // M2: gate on both resolving to prevent race-condition pop-in
   const announcementText = announcementReady && cityReady
     ? (announcement ?? (detectedCity ? `Delivering to ${detectedCity}` : null))
@@ -171,12 +168,7 @@ export function Navbar() {
   return (
     <>
       <AnnouncementBar text={announcementText} loading={!announcementReady || !cityReady} />
-      <header
-        className={cn(
-          'sticky top-0 z-50 w-full transition-all duration-300',
-          dark ? 'bg-w-dark border-b border-white/10' : 'bg-w-bg border-b border-w-ghost shadow-sm'
-        )}
-      >
+      <header className="sticky top-0 z-50 w-full transition-all duration-300 bg-brand-dark border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left — Nav links */}
@@ -188,8 +180,8 @@ export function Navbar() {
                   className={cn(
                     'font-sans text-sm tracking-wide transition-colors duration-200',
                     isActive(link.href)
-                      ? (dark ? 'text-w-emerald border-b border-w-emerald' : 'text-w-forest border-b border-w-forest')
-                      : (dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')
+                      ? 'text-brand-green border-b border-brand-green'
+                      : 'text-white/70 hover:text-white'
                   )}
                 >
                   {link.label}
@@ -200,7 +192,7 @@ export function Navbar() {
             {/* Mobile — hamburger */}
             <button
               ref={menuBtnRef}
-              className={cn('lg:hidden p-2 transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}
+              className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={menuOpen}
@@ -209,53 +201,43 @@ export function Navbar() {
             </button>
 
             {/* Center — Logo */}
-            <Link
-              href="/"
-              className="absolute left-1/2 -translate-x-1/2 text-center flex flex-col items-center leading-none"
-            >
-              <span className={cn('font-prata text-2xl tracking-[0.15em] uppercase', dark ? 'text-white' : 'text-brand-dark')}>
-                Wilourin
-              </span>
-              <span className={cn('font-raleway text-[8px] tracking-[0.35em] uppercase mt-0.5', dark ? 'text-white/50' : 'text-brand-gray')}>
-                Regal Reimagine
-              </span>
+            <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-center flex flex-col items-center leading-none">
+              <span className="font-prata text-2xl tracking-[0.15em] uppercase text-white">Wilourin</span>
+              <span className="font-raleway text-[8px] tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
             </Link>
 
             {/* Right — Icons */}
             <div className="flex items-center gap-4">
-              <button onClick={toggleSearch} aria-label="Search"
-                className={cn('transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}>
+              <button onClick={toggleSearch} aria-label="Search" className="text-white/70 hover:text-white transition-colors">
                 <Search size={20} />
               </button>
-              <Link href="/wishlist" aria-label="Wishlist"
-                className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}>
+              <Link href="/wishlist" aria-label="Wishlist" className="relative text-white/70 hover:text-white transition-colors">
                 <Heart size={20} />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-w-forest text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  <span className="absolute -top-1.5 -right-1.5 bg-brand-green text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
-              <button onClick={toggleCart} aria-label="Cart"
-                className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}>
+              <button onClick={toggleCart} aria-label="Cart" className="relative text-white/70 hover:text-white transition-colors">
                 <ShoppingBag size={20} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-w-forest text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce-once">
+                  <span className="absolute -top-1.5 -right-1.5 bg-brand-green text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce-once">
                     {cartCount}
                   </span>
                 )}
               </button>
               <Link href={profile ? '/account' : '/login'} aria-label={profile?.loyalty_tier ? `Account — ${profile.loyalty_tier} member` : 'Account'}
-                className={cn('relative transition-colors', dark ? 'text-white/80 hover:text-white' : 'text-w-dark hover:text-w-forest')}>
+                className="relative text-white/70 hover:text-white transition-colors">
                 <User size={20} />
                 {profile && (
-                  <span aria-hidden="true" className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier ?? ''] ?? 'text-w-graphite')}>
+                  <span aria-hidden="true" className={cn('absolute -top-1.5 -right-1.5 text-[8px]', TIER_COLORS[profile.loyalty_tier ?? ''] ?? 'text-white/40')}>
                     <Crown size={10} />
                   </span>
                 )}
               </Link>
               {isAdmin && (
-                <Link href="/admin" className={cn('hidden lg:block font-sans text-xs uppercase tracking-widest transition-colors', dark ? 'text-white/50 hover:text-white' : 'text-w-graphite hover:text-w-dark')}>
+                <Link href="/admin" className="hidden lg:block font-sans text-xs uppercase tracking-widest text-white/40 hover:text-white transition-colors">
                   Admin
                 </Link>
               )}
@@ -266,35 +248,35 @@ export function Navbar() {
 
       {/* Mobile full-screen menu */}
       {menuOpen && (
-        <div ref={menuOverlayRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[60] bg-w-bg flex flex-col animate-fade-in">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-w-ghost">
+        <div ref={menuOverlayRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[60] bg-brand-dark flex flex-col animate-fade-in">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
             <div className="flex flex-col leading-none">
-              <span className="font-prata text-2xl tracking-[0.15em] uppercase text-brand-dark">Wilourin</span>
-              <span className="font-raleway text-[8px] tracking-[0.35em] uppercase text-brand-gray mt-0.5">Regal Reimagine</span>
+              <span className="font-prata text-2xl tracking-[0.15em] uppercase text-white">Wilourin</span>
+              <span className="font-raleway text-[8px] tracking-[0.35em] uppercase text-white/40 mt-0.5">Regal Reimagine</span>
             </div>
-            <button ref={closeMenuBtnRef} onClick={() => setMenuOpen(false)} className="text-w-dark" aria-label="Close menu"><X size={24} /></button>
+            <button ref={closeMenuBtnRef} onClick={() => setMenuOpen(false)} className="text-white/70 hover:text-white" aria-label="Close menu"><X size={24} /></button>
           </div>
           <nav className="flex flex-col gap-1 p-6 flex-1">
             {NAV_LINKS.map((link) => (
               <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
-                className="py-4 text-2xl font-serif text-w-dark border-b border-w-ghost hover:pl-2 hover:text-w-forest transition-all">
+                className="py-4 text-2xl font-prata text-white border-b border-white/10 hover:pl-2 hover:text-brand-green transition-all">
                 {link.label}
               </Link>
             ))}
             {isAdmin && (
-              <Link href="/admin" onClick={() => setMenuOpen(false)} className="py-4 text-2xl font-serif border-b border-w-ghost text-w-graphite">
+              <Link href="/admin" onClick={() => setMenuOpen(false)} className="py-4 text-2xl font-prata border-b border-white/10 text-white/40">
                 Admin Panel
               </Link>
             )}
           </nav>
           <div className="p-6 flex gap-4">
             <Link href={profile ? '/account' : '/login'} onClick={() => setMenuOpen(false)}
-              className="flex-1 text-center py-3 border border-w-dark text-w-dark text-sm uppercase tracking-widest hover:bg-w-dark hover:text-white transition-colors rounded-none">
+              className="flex-1 text-center py-3 border border-white/30 text-white text-sm uppercase tracking-widest hover:bg-white hover:text-brand-dark transition-colors rounded-none">
               {profile ? 'My Account' : 'Login'}
             </Link>
             {!profile && (
               <Link href="/signup" onClick={() => setMenuOpen(false)}
-                className="flex-1 text-center py-3 bg-w-forest text-white text-sm uppercase tracking-widest hover:bg-w-emerald transition-colors rounded-none">
+                className="flex-1 text-center py-3 bg-brand-green text-white text-sm uppercase tracking-widest hover:bg-brand-green-light transition-colors rounded-none">
                 Sign Up
               </Link>
             )}

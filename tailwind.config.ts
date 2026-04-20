@@ -11,29 +11,29 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        // Wilourin brand palette
+        // Wilourin brand palette — dark concrete luxury
         brand: {
-          background:   '#E8E4DC',
-          surface:      '#F5F2ED',
-          green:        '#2C5F3E',
-          'green-light':'#3D7A52',
-          dark:         '#1A1A1A',
-          gray:         '#6B6B6B',
-          beige:        '#C9B99A',
-          white:        '#FFFFFF',
+          background:    '#222222',   // dark concrete wall
+          surface:       '#2C2C2C',   // slightly lighter for cards/panels
+          green:         '#1A5C35',   // deep forest green (like the velvet panels)
+          'green-light': '#236B40',   // hover green
+          dark:          '#141414',   // near black
+          gray:          '#909090',   // mid gray for secondary text
+          beige:         '#C9B99A',   // warm cream accent
+          white:         '#F5F0E8',   // warm off-white
         },
-        // w-* aliases → new brand values (keeps all existing components working)
-        "w-bg":       '#E8E4DC',
-        "w-surface":  '#F5F2ED',
-        "w-graphite": '#6B6B6B',
-        "w-dark":     '#1A1A1A',
-        "w-forest":   '#2C5F3E',
-        "w-emerald":  '#3D7A52',
-        "w-ghost":    '#C9B99A',
+        // w-* aliases → dark brand values (keeps all existing components working)
+        "w-bg":       '#222222',
+        "w-surface":  '#2C2C2C',
+        "w-graphite": '#909090',
+        "w-dark":     '#141414',
+        "w-forest":   '#1A5C35',
+        "w-emerald":  '#236B40',
+        "w-ghost":    '#3A3A3A',
         // legacy
         gold:         "#C9A84C",
-        "off-white":  "#F5F5F0",
-        charcoal:     "#1A1A1A",
+        "off-white":  "#F5F0E8",
+        charcoal:     "#141414",
       },
       fontFamily: {
         serif:   ["Prata", "var(--font-prata)", "Georgia", "serif"],

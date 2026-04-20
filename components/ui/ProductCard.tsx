@@ -113,7 +113,7 @@ export function ProductCard({
 
       {/* Info */}
       <div className="p-3 space-y-1">
-        <p className="font-prata text-sm text-brand-dark tracking-wide line-clamp-1">{name}</p>
+        <p className="font-prata text-sm text-brand-white tracking-wide line-clamp-1">{name}</p>
         <span className="font-raleway text-xs text-brand-gray">{formatPrice(price)}</span>
       </div>
     </Link>
