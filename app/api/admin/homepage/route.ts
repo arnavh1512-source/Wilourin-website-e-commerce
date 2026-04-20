@@ -11,7 +11,7 @@ const homepageSchema = z.object({
   hero_cta_text: z.string().max(200).optional(),
   hero_cta_link: z.string().max(500).optional(),
   hero_image_url: z.string().max(1000).optional(),
-  hero_video_url: z.string().url().max(2000).optional().nullable(),
+  hero_video_url: z.union([z.string().url().max(2000), z.literal(''), z.null()]).optional(),
   featured_category_ids: z.array(z.string()).optional(),
   featured_product_ids: z.array(z.string()).optional(),
   announcement_text: z.string().max(500).optional(),
