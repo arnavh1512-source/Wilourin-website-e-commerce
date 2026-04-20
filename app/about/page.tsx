@@ -115,13 +115,9 @@ export default function AboutPage() {
       <section id="contact" className="py-20 max-w-2xl mx-auto px-4 sm:px-6 text-center">
         <h2 className="font-serif text-4xl mb-4">Get in Touch</h2>
         <p className="text-gray-500 text-sm mb-8">We&apos;re a small team and we reply fast. Reach us any way you prefer.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-700 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 mb-10">
           <div className="border border-gray-100 p-5 rounded">
-            <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Email</p>
-            <p>hello@wilourin.com</p>
-          </div>
-          <div className="border border-gray-100 p-5 rounded">
-            <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Phone</p>
+            <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">WhatsApp</p>
             <p>+91 81400 81461</p>
           </div>
           <div className="border border-gray-100 p-5 rounded">

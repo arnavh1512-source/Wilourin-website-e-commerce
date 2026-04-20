@@ -88,7 +88,6 @@ export function Footer() {
         <div className="space-y-4">
           <h4 className="font-sans text-xs uppercase tracking-widest text-white">Get in Touch</h4>
           <div className="space-y-2 text-sm text-white/60 font-sans">
-            <p>hello@wilourin.com</p>
             <p>+91 81400 81461</p>
             <p className="text-white/40">Ahmedabad, Gujarat, India</p>
           </div>
