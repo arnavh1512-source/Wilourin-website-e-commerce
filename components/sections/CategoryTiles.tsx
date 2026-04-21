@@ -24,13 +24,12 @@ export function CategoryTiles() {
     <section className="bg-brand-background py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-prata text-white text-2xl sm:text-3xl mb-6 sm:mb-8">Shop by Category</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-w-ghost">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-w-ghost">
           {TILES.map((tile) => (
             <Link
               key={tile.href}
               href={tile.href}
-              className="relative overflow-hidden group cursor-pointer"
-              style={{ aspectRatio: '2/3' }}
+              className="relative overflow-hidden group cursor-pointer aspect-[3/2] sm:aspect-[2/3]"
             >
               <Image
                 src={tile.image}

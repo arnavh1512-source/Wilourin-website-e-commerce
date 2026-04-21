@@ -202,8 +202,8 @@ export function Navbar() {
 
             {/* Center — Logo */}
             <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-center flex flex-col items-center leading-none">
-              <span className="font-prata text-2xl tracking-[0.15em] uppercase text-white">Wilourin</span>
-              <span className="font-raleway text-[8px] tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
+              <span className="font-prata text-lg sm:text-2xl tracking-[0.05em] sm:tracking-[0.15em] uppercase text-white">Wilourin</span>
+              <span className="font-raleway text-[7px] sm:text-[8px] tracking-[0.2em] sm:tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
             </Link>
 
             {/* Right — Icons */}
