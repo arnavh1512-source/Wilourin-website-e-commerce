@@ -170,44 +170,44 @@ export function Navbar() {
       <AnnouncementBar text={announcementText} loading={!announcementReady || !cityReady} />
       <header className="sticky top-0 z-50 w-full transition-all duration-300 bg-w-forest border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left — Nav links */}
-            <nav className="hidden lg:flex items-center gap-8">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'font-sans text-sm tracking-wide transition-colors duration-200',
-                    isActive(link.href)
-                      ? 'text-brand-green border-b border-brand-green'
-                      : 'text-white/70 hover:text-white'
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Mobile — hamburger */}
-            <button
-              ref={menuBtnRef}
-              className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-            >
-              <Menu size={22} />
-            </button>
+          <div className="grid grid-cols-3 items-center h-16">
+            {/* Left — Nav links (desktop) / Hamburger (mobile) */}
+            <div className="flex items-center">
+              <nav className="hidden lg:flex items-center gap-8">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      'font-sans text-sm tracking-wide transition-colors duration-200',
+                      isActive(link.href)
+                        ? 'text-brand-green border-b border-brand-green'
+                        : 'text-white/70 hover:text-white'
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+              <button
+                ref={menuBtnRef}
+                className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={menuOpen}
+              >
+                <Menu size={22} />
+              </button>
+            </div>
 
             {/* Center — Logo */}
-            <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-center flex flex-col items-center leading-none">
-              <span className="font-prata text-lg sm:text-2xl tracking-[0.05em] sm:tracking-[0.15em] uppercase text-white">Wilourin</span>
-              <span className="font-raleway text-[7px] sm:text-[8px] tracking-[0.2em] sm:tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
+            <Link href="/" className="flex flex-col items-center justify-center leading-none">
+              <span className="font-prata text-xl sm:text-2xl tracking-[0.1em] sm:tracking-[0.15em] uppercase text-white">Wilourin</span>
+              <span className="font-raleway text-[7px] sm:text-[8px] tracking-[0.25em] sm:tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
             </Link>
 
             {/* Right — Icons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-end gap-3 sm:gap-4">
               <button onClick={toggleSearch} aria-label="Search" className="text-white/70 hover:text-white transition-colors">
                 <Search size={20} />
               </button>
