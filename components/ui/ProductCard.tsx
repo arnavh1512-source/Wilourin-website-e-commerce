@@ -88,7 +88,7 @@ export function ProductCard({
         {/* Quick-add + button */}
         <button
           onClick={handleQuickAdd}
-          className="absolute top-3 right-3 w-8 h-8 bg-white text-w-dark text-lg flex items-center justify-center hover:bg-w-forest hover:text-white transition-colors rounded-none shadow-sm"
+          className="absolute top-3 right-3 w-10 h-10 bg-white text-w-dark text-lg flex items-center justify-center hover:bg-w-forest hover:text-white transition-colors rounded-none shadow-sm"
           aria-label="Quick add to cart"
         >
           +
@@ -97,7 +97,7 @@ export function ProductCard({
         {/* Wishlist */}
         <button
           onClick={toggleWishlist}
-          className="absolute bottom-12 right-3 w-7 h-7 bg-white/90 text-w-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-none"
+          className="absolute bottom-12 right-3 w-9 h-9 bg-white/90 text-w-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-none"
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? '#1B4332' : 'none'} stroke="currentColor" strokeWidth="2">

@@ -37,11 +37,11 @@ export default function WishlistPage() {
     <div className="bg-brand-background min-h-screen">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10">
-          <h1 className="font-serif text-w-dark text-4xl mb-1">Wishlist</h1>
+          <h1 className="font-serif text-w-dark text-3xl sm:text-4xl mb-1">Wishlist</h1>
           <p className="font-sans text-sm text-w-graphite">{items.length} saved {items.length === 1 ? 'item' : 'items'}</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-w-ghost">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-px bg-w-ghost">
           {items.map((item, i) => (
             <div key={item.id} className="group relative bg-w-surface">
               <Link href={`/products/${item.slug}`} className="block relative overflow-hidden" style={{ aspectRatio: i % 2 === 0 ? '2/3' : '3/4' }}>
@@ -78,7 +78,7 @@ export default function WishlistPage() {
                 </div>
                 <Link
                   href={`/products/${item.slug}`}
-                  className="flex items-center justify-center gap-1.5 bg-w-forest text-white font-sans text-xs uppercase tracking-widest py-2 hover:bg-w-forest transition-colors rounded-none"
+                  className="flex items-center justify-center gap-1.5 bg-w-forest text-white font-sans text-xs uppercase tracking-widest py-3 hover:bg-w-forest transition-colors rounded-none"
                 >
                   <ShoppingBag size={11} />
                   Select Size

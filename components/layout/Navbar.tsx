@@ -259,7 +259,7 @@ export function Navbar() {
           <nav className="flex flex-col gap-1 p-6 flex-1">
             {NAV_LINKS.map((link) => (
               <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
-                className="py-4 text-2xl font-prata text-white border-b border-white/10 hover:pl-2 hover:text-brand-green transition-all">
+                className="py-3 text-xl sm:text-2xl font-prata text-white border-b border-white/10 hover:pl-2 hover:text-brand-green transition-all">
                 {link.label}
               </Link>
             ))}

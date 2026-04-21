@@ -98,7 +98,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     <div className="bg-brand-background min-h-screen">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
-        <h1 className="font-serif text-w-dark text-4xl mb-1">{title}</h1>
+        <h1 className="font-serif text-w-dark text-3xl sm:text-4xl mb-1">{title}</h1>
         <p className="font-sans text-sm text-w-graphite">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</p>
       </div>
 

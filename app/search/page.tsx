@@ -136,7 +136,7 @@ export default function SearchPage() {
           ) : (
             <>
               <p className="text-sm text-gray-500 mb-6">{results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {results.map((p) => {
                   const primary = p.product_images.find((i) => i.is_primary) ?? p.product_images[0]
                   const secondary = p.product_images.find((i) => !i.is_primary)

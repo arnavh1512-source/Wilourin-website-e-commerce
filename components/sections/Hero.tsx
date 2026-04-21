@@ -39,14 +39,14 @@ export function Hero({ headline, subtext, imageUrl, videoUrl }: HeroProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/75" style={{ zIndex: 1 }} />
 
       {/* Hero text + CTAs */}
-      <div className="absolute bottom-16 md:bottom-14 left-1/2 -translate-x-1/2 text-center z-[5] px-4 w-full max-w-3xl">
-        <h1 className="font-prata text-white text-4xl md:text-6xl font-light mb-4 leading-tight">
+      <div className="absolute bottom-10 md:bottom-14 left-1/2 -translate-x-1/2 text-center z-[5] px-4 w-full max-w-3xl">
+        <h1 className="font-prata text-white text-3xl sm:text-4xl md:text-6xl font-light mb-3 md:mb-4 leading-tight">
           {headline ?? 'DRESS THE STREETS'}
         </h1>
-        <p className="font-raleway text-white/60 text-xs tracking-[0.3em] uppercase mb-8 font-light">
+        <p className="font-raleway text-white/60 text-[10px] sm:text-xs tracking-[0.3em] uppercase mb-6 md:mb-8 font-light">
           {subtext ?? 'Premium Indian Fashion'}
         </p>
-        <div className="flex items-center justify-center gap-4 flex-wrap">
+        <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
           <Link
             href="/products"
             className="font-raleway text-xs uppercase tracking-[0.2em] bg-brand-green text-white px-8 py-3 hover:bg-brand-green-light transition-colors duration-200"

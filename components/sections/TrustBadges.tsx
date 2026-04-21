@@ -11,7 +11,7 @@ export function TrustBadges() {
   return (
     <section className="py-10 bg-w-surface">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           {BADGES.map((badge) => (
             <div key={badge.label} className="flex flex-col items-center text-center gap-2 py-4">
               <div className="text-w-forest"><badge.icon size={20} /></div>
