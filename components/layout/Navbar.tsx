@@ -201,14 +201,14 @@ export function Navbar() {
             </div>
 
             {/* Center — Logo */}
-            <Link href="/" className="flex flex-col items-center justify-center leading-none">
-              <span className="font-prata text-xl sm:text-2xl tracking-[0.1em] sm:tracking-[0.15em] uppercase text-white">Wilourin</span>
-              <span className="font-raleway text-[7px] sm:text-[8px] tracking-[0.25em] sm:tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
+            <Link href="/" className="flex flex-col items-center justify-center leading-none min-w-0">
+              <span className="font-prata text-base sm:text-2xl tracking-normal sm:tracking-[0.15em] uppercase text-white truncate">Wilourin</span>
+              <span className="hidden sm:block font-raleway text-[8px] tracking-[0.35em] uppercase mt-0.5 text-white/40">Regal Reimagine</span>
             </Link>
 
             {/* Right — Icons */}
             <div className="flex items-center justify-end gap-3 sm:gap-4">
-              <button onClick={toggleSearch} aria-label="Search" className="text-white/70 hover:text-white transition-colors">
+              <button onClick={toggleSearch} aria-label="Search" className="hidden sm:block text-white/70 hover:text-white transition-colors">
                 <Search size={20} />
               </button>
               <Link href="/wishlist" aria-label="Wishlist" className="relative text-white/70 hover:text-white transition-colors">
@@ -257,6 +257,10 @@ export function Navbar() {
             <button ref={closeMenuBtnRef} onClick={() => setMenuOpen(false)} className="text-white/70 hover:text-white" aria-label="Close menu"><X size={24} /></button>
           </div>
           <nav className="flex flex-col gap-1 p-6 flex-1">
+            <button onClick={() => { setMenuOpen(false); toggleSearch() }}
+              className="py-3 text-xl font-prata text-white/60 border-b border-white/10 text-left hover:pl-2 hover:text-brand-green transition-all flex items-center gap-3">
+              <Search size={18} /> Search
+            </button>
             {NAV_LINKS.map((link) => (
               <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
                 className="py-3 text-xl sm:text-2xl font-prata text-white border-b border-white/10 hover:pl-2 hover:text-brand-green transition-all">
