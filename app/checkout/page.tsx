@@ -27,12 +27,7 @@ const STEPS = ['Address', 'Shipping', 'Payment']
 
 declare global {
   interface Window {
-    Paytm: {
-      CheckoutJS: {
-        init: (config: Record<string, unknown>) => Promise<void>
-        invoke: () => void
-      }
-    }
+    Razorpay: new (options: Record<string, unknown>) => { open: () => void; on: (event: string, handler: () => void) => void }
   }
 }
 
@@ -126,14 +121,11 @@ export default function CheckoutPage() {
     }
   }, [profile, items.length, router])
 
-  const loadPaytmScript = () =>
+  const loadRazorpayScript = () =>
     new Promise<void>((resolve) => {
-      if (window.Paytm) { resolve(); return }
+      if (window.Razorpay) { resolve(); return }
       const script = document.createElement('script')
-      const base = process.env.NEXT_PUBLIC_PAYTM_ENV === 'PROD'
-        ? 'https://securegw.paytm.in'
-        : 'https://securegw-stage.paytm.in'
-      script.src = `${base}/merchantpgpui/checkoutjs/merchants/${process.env.NEXT_PUBLIC_PAYTM_MERCHANT_ID}.js`
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
       script.onload = () => resolve()
       document.body.appendChild(script)
     })
@@ -141,7 +133,7 @@ export default function CheckoutPage() {
   const placeOrder = handleSubmit(async (formData) => {
     setPaying(true)
     try {
-      const res = await fetch('/api/paytm/create-order', {
+      const res = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -155,47 +147,49 @@ export default function CheckoutPage() {
         }),
       })
       const data = await res.json()
-      if (!data.txnToken) { addToast(data.error ?? 'Order creation failed', 'error'); return }
+      if (!data.razorpayOrderId) { addToast(data.error ?? 'Order creation failed', 'error'); setPaying(false); return }
 
-      await loadPaytmScript()
+      await loadRazorpayScript()
 
-      const config = {
-        root: '',
-        flow: 'DEFAULT',
-        data: {
-          orderId: data.orderId,
-          token: data.txnToken,
-          tokenType: 'TXN_TOKEN',
-          amount: data.amount,
+      const rzp = new window.Razorpay({
+        key: data.keyId,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'Wilourin',
+        description: 'Premium Indian Streetwear',
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: formData.full_name ?? '',
+          email: formData.email ?? '',
+          contact: formData.phone ?? '',
         },
-        merchant: { redirect: false },
-        handler: {
-          notifyMerchant: async (eventName: string) => {
-            if (eventName === 'APP_CLOSED') { setPaying(false) }
-          },
-          transactionStatus: async (paymentData: Record<string, string>) => {
-            const verifyRes = await fetch('/api/paytm/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...paymentData }),
-            })
-            const verified = await verifyRes.json()
-            if (verified.success) {
-              clearCart()
-              router.push(`/checkout/success?order=${verified.orderNumber}`)
-            } else {
-              addToast('Payment failed or could not be verified. Please try again.', 'error')
-              setPaying(false)
-            }
-          },
+        theme: { color: '#1A5C35' },
+        modal: { ondismiss: () => setPaying(false) },
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          const verifyRes = await fetch('/api/razorpay/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: data.orderId,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            }),
+          })
+          const verified = await verifyRes.json()
+          if (verified.success) {
+            clearCart()
+            router.push(`/checkout/success?order=${verified.orderNumber}`)
+          } else {
+            addToast('Payment could not be verified. Please contact support.', 'error')
+            setPaying(false)
+          }
         },
-      }
+      })
 
-      await window.Paytm.CheckoutJS.init(config)
-      window.Paytm.CheckoutJS.invoke()
+      rzp.open()
     } catch {
       addToast('Something went wrong. Please try again.', 'error')
-    } finally {
       setPaying(false)
     }
   })
@@ -413,7 +407,7 @@ export default function CheckoutPage() {
                 className="w-full flex items-center justify-center gap-2 bg-[#0A0A0A] text-white py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-60"
               >
                 <Lock size={14} />
-                {paying ? 'Opening Paytm…' : 'Pay with Paytm'}
+                {paying ? 'Opening Razorpay…' : 'Pay with Razorpay'}
               </button>
             )}
 
@@ -423,7 +417,7 @@ export default function CheckoutPage() {
               ))}
             </div>
             <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
-              <Lock size={11} />Secured by Paytm Payment Gateway
+              <Lock size={11} />Secured by Razorpay Payment Gateway
             </p>
           </div>
         </div>

@@ -11,7 +11,7 @@ const FAQS = [
   { q: 'Are the sizes true to fit?', a: 'Most of our pieces are oversized. We recommend sizing down for a regular fit. Check the size guide on each product page.' },
   { q: 'How do I track my order?', a: 'Once your order ships, you\'ll receive an email with tracking details. You can also check your order status in My Account.' },
   { q: 'Do you accept exchanges?', a: 'Yes! We offer size exchanges within 7 days of delivery. WhatsApp us with your order number and desired size.' },
-  { q: 'Is COD available?', a: 'Currently we accept Paytm payments (UPI, Cards, Wallets, BNPL). COD is not available at this time.' },
+  { q: 'Is COD available?', a: 'Currently we accept payments via Razorpay (UPI, Cards, Wallets, Net Banking, EMI). COD is not available at this time.' },
 ]
 
 export function HelpDrawer() {

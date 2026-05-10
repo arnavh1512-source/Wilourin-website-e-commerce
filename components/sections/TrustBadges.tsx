@@ -1,7 +1,7 @@
 import { Lock, RefreshCw, Truck, ShieldCheck } from 'lucide-react'
 
 const BADGES = [
-  { icon: Lock, label: 'Secure Payment', sub: 'UPI, Cards, Paytm' },
+  { icon: Lock, label: 'Secure Payment', sub: 'UPI, Cards, Razorpay' },
   { icon: RefreshCw, label: 'Easy Returns', sub: '7-day return policy' },
   { icon: Truck, label: 'Free Shipping', sub: 'On orders above ₹999' },
   { icon: ShieldCheck, label: 'Authentic Products', sub: '100% genuine pieces' },

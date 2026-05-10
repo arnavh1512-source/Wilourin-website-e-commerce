@@ -112,7 +112,7 @@ export function Footer() {
           © {new Date().getFullYear()} Wilourin. All rights reserved. Made with love in India.
         </p>
         <div className="flex items-center gap-3">
-          {['UPI', 'Paytm', 'Visa', 'Mastercard', 'COD'].map((method) => (
+          {['UPI', 'Razorpay', 'Visa', 'Mastercard', 'COD'].map((method) => (
             <span
               key={method}
               className="font-sans text-[10px] uppercase tracking-widest text-white/40 border border-w-ghost/20 px-2 py-1 rounded-none"
