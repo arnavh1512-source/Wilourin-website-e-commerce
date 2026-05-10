@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Prata&family=Raleway:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #828080;
+  --foreground: #F5F0E8;
+  --font-prata: 'Prata', Georgia, serif;
+  --font-raleway: 'Raleway', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-raleway);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-prata);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #6E6C6C; }
+::-webkit-scrollbar-thumb { background: #1A5C35; border-radius: 2px; }
+
+.skeleton {
+  background: linear-gradient(90deg, #757373 25%, #6E6C6C 50%, #757373 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.product-image-wrap { position: relative; overflow: hidden; }
+.product-image-wrap img.secondary {
+  position: absolute; inset: 0; opacity: 0;
+  transition: opacity 300ms ease;
+}
+.product-image-wrap:hover img.secondary { opacity: 1; }
+
+:focus-visible { outline: 2px solid #1A5C35; outline-offset: 2px; }
+
+.drawer-backdrop {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+@media print { .no-print { display: none !important; } }
+[data-aos] { transition-duration: 600ms !important; }
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
