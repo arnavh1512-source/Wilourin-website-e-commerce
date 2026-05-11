@@ -14,10 +14,10 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <p className="font-sans text-xs uppercase tracking-[0.4em] text-w-graphite mb-3">Handpicked</p>
-            <h2 className="font-serif text-w-dark text-4xl sm:text-5xl">Featured Pieces</h2>
+            <p className="font-raleway text-[9px] uppercase tracking-[0.4em] text-brand-green mb-3">Handpicked</p>
+            <h2 className="font-prata text-brand-ink text-4xl sm:text-5xl">Featured Pieces</h2>
           </div>
-          <Link href="/products" className="hidden sm:block font-sans text-xs uppercase tracking-widest text-w-graphite hover:text-w-dark transition-colors underline underline-offset-4">
+          <Link href="/products" className="hidden sm:block font-raleway text-xs uppercase tracking-widest text-w-graphite hover:text-brand-ink transition-colors underline underline-offset-4">
             View All
           </Link>
         </div>
@@ -42,7 +42,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
           })}
         </div>
         <div className="text-center mt-8 sm:hidden">
-          <Link href="/products" className="font-sans text-xs uppercase tracking-widest text-w-graphite hover:text-w-dark underline underline-offset-4">
+          <Link href="/products" className="font-raleway text-xs uppercase tracking-widest text-w-graphite hover:text-brand-ink underline underline-offset-4">
             View All Products
           </Link>
         </div>

@@ -20,10 +20,10 @@ interface ProductCardProps {
 }
 
 const BADGE_STYLES: Record<string, string> = {
-  'New Arrival': 'bg-w-forest text-white',
-  Sale:          'bg-w-forest text-white',
-  Bestseller:    'bg-w-forest text-white',
-  'Low Stock':   'bg-w-forest text-white',
+  'New Arrival': 'bg-brand-green text-white',
+  Sale:          'bg-brand-green text-white',
+  Bestseller:    'bg-brand-green text-white',
+  'Low Stock':   'bg-brand-green text-white',
 }
 
 export function ProductCard({
@@ -52,12 +52,9 @@ export function ProductCard({
   }
 
   return (
-    <Link href={`/products/${slug}`} className="group block bg-w-surface">
+    <Link href={`/products/${slug}`} className="group block bg-brand-surface transition-transform duration-300 hover:-translate-y-0.5">
       {/* Image container */}
-      <div
-        className="relative overflow-hidden"
-        style={{ aspectRatio }}
-      >
+      <div className="relative overflow-hidden" style={{ aspectRatio }}>
         <Image
           src={primaryImage}
           alt={name}
@@ -75,46 +72,42 @@ export function ProductCard({
           />
         )}
 
-        {/* Badge — New Arrival / Bestseller / Low Stock only, no discount % */}
         {badge && badge !== 'Sale' ? (
           <span className={cn(
-            'absolute top-3 left-3 font-sans text-xs px-2 py-0.5 tracking-wider uppercase',
-            BADGE_STYLES[badge] ?? 'bg-w-surface text-white'
+            'absolute top-3 left-3 font-raleway text-[9px] px-2 py-0.5 tracking-widest uppercase',
+            BADGE_STYLES[badge] ?? 'bg-brand-surface text-brand-ink'
           )}>
             {badge === 'New Arrival' ? 'New' : badge}
           </span>
         ) : null}
 
-        {/* Quick-add + button */}
         <button
           onClick={handleQuickAdd}
-          className="absolute top-3 right-3 w-10 h-10 bg-white text-w-dark text-lg flex items-center justify-center hover:bg-w-forest hover:text-white transition-colors rounded-none shadow-sm"
+          className="absolute top-3 right-3 w-9 h-9 bg-brand-background text-brand-ink text-lg flex items-center justify-center hover:bg-brand-dark hover:text-brand-background transition-colors shadow-sm"
           aria-label="Quick add to cart"
         >
           +
         </button>
 
-        {/* Wishlist */}
         <button
           onClick={toggleWishlist}
-          className="absolute bottom-12 right-3 w-9 h-9 bg-white/90 text-w-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-none"
+          className="absolute bottom-12 right-3 w-9 h-9 bg-brand-background/90 text-brand-ink flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? '#1B4332' : 'none'} stroke="currentColor" strokeWidth="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? '#115511' : 'none'} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
 
-        {/* Quick view overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-w-surface/80 text-white font-sans text-xs tracking-widest uppercase text-center py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 bg-brand-ink/80 text-brand-background font-raleway text-[9px] tracking-widest uppercase text-center py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           Quick View
         </div>
       </div>
 
       {/* Info */}
       <div className="p-3 space-y-1">
-        <p className="font-prata text-sm text-brand-white tracking-wide line-clamp-1">{name}</p>
-        <span className="font-raleway text-xs text-brand-gray">{formatPrice(price)}</span>
+        <p className="font-prata text-sm text-brand-ink tracking-wide line-clamp-1">{name}</p>
+        <span className="font-raleway text-xs text-w-graphite">{formatPrice(price)}</span>
       </div>
     </Link>
   )

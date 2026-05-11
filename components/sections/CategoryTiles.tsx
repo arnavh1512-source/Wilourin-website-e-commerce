@@ -23,7 +23,7 @@ export function CategoryTiles() {
   return (
     <section className="bg-brand-background py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-prata text-white text-2xl sm:text-3xl mb-6 sm:mb-8">Shop by Category</h2>
+        <h2 className="font-prata text-brand-ink text-2xl sm:text-3xl mb-6 sm:mb-8">Shop by Category</h2>
         <div className="grid grid-cols-3 gap-px bg-w-ghost">
           {TILES.map((tile) => (
             <Link
@@ -38,14 +38,10 @@ export function CategoryTiles() {
                 className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 1024px) 192px, 20vw"
               />
-              {/* Gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-w-dark/75 via-transparent to-transparent" />
-              {/* Label */}
               <div className="absolute bottom-0 left-0 right-0 p-4">
-                <span className="font-sans text-white text-xs tracking-widest uppercase block">
-                  {tile.label}
-                </span>
-                <div className="mt-1 h-0.5 bg-w-forest w-0 group-hover:w-full transition-all duration-300" />
+                <span className="font-raleway text-white text-xs tracking-widest uppercase block">{tile.label}</span>
+                <div className="mt-1 h-0.5 bg-brand-green w-0 group-hover:w-full transition-all duration-300" />
               </div>
             </Link>
           ))}

@@ -55,7 +55,6 @@ export function CartDrawer() {
     }
   }
 
-  // Close on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') toggleCart() }
     if (isCartOpen) document.addEventListener('keydown', onKey)
@@ -64,27 +63,25 @@ export function CartDrawer() {
 
   return (
     <>
-      {/* Backdrop */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-[55] bg-black/40 drawer-backdrop" onClick={toggleCart} aria-hidden />
+        <div className="fixed inset-0 z-[55] bg-brand-ink/40 drawer-backdrop" onClick={toggleCart} aria-hidden />
       )}
 
-      {/* Drawer */}
       <div
         className={cn(
-          'fixed top-0 right-0 h-full w-full max-w-md z-[60] bg-white shadow-2xl flex flex-col transition-transform duration-350',
+          'fixed top-0 right-0 h-full w-full max-w-md z-[60] bg-brand-background shadow-2xl flex flex-col transition-transform duration-350',
           isCartOpen ? 'translate-x-0' : 'translate-x-full'
         )}
         aria-label="Shopping cart"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-w-ghost/40">
           <div className="flex items-center gap-2">
-            <ShoppingBag size={18} />
-            <span className="font-serif text-xl">Your Cart</span>
-            {items.length > 0 && <span className="text-xs text-gray-500">({items.length} {items.length === 1 ? 'item' : 'items'})</span>}
+            <ShoppingBag size={18} className="text-brand-ink" />
+            <span className="font-prata text-xl text-brand-ink">Your Cart</span>
+            {items.length > 0 && <span className="font-raleway text-xs text-w-graphite">({items.length} {items.length === 1 ? 'item' : 'items'})</span>}
           </div>
-          <button onClick={toggleCart} aria-label="Close cart" className="opacity-60 hover:opacity-100 transition-opacity">
+          <button onClick={toggleCart} aria-label="Close cart" className="text-brand-ink opacity-60 hover:opacity-100 transition-opacity">
             <X size={20} />
           </button>
         </div>
@@ -92,10 +89,10 @@ export function CartDrawer() {
         {/* Empty state */}
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
-            <ShoppingBag size={48} className="text-gray-200" />
-            <p className="font-serif text-2xl">Your cart is empty</p>
-            <p className="text-sm text-gray-500">Add some pieces to get started.</p>
-            <button onClick={toggleCart} className="mt-2 bg-[#0A0A0A] text-white text-xs uppercase tracking-widest px-8 py-3">
+            <ShoppingBag size={48} className="text-w-ghost" />
+            <p className="font-prata text-2xl text-brand-ink">Your cart is empty</p>
+            <p className="font-raleway text-sm text-w-graphite">Add some pieces to get started.</p>
+            <button onClick={toggleCart} className="mt-2 bg-brand-dark text-brand-background font-raleway text-xs uppercase tracking-widest px-8 py-3 hover:bg-brand-ink transition-colors">
               Continue Shopping
             </button>
           </div>
@@ -103,9 +100,9 @@ export function CartDrawer() {
           <>
             {/* Free shipping bar */}
             {!shippingFree && (
-              <div className="bg-gray-50 px-6 py-2.5 text-xs text-gray-600 flex items-center gap-2">
+              <div className="bg-brand-surface px-6 py-2.5 font-raleway text-xs text-w-graphite flex items-center gap-2">
                 <Truck size={12} />
-                Add {formatPrice(freeThreshold - subtotal)} more for <strong>free shipping</strong>
+                Add {formatPrice(freeThreshold - subtotal)} more for <strong className="text-brand-ink">free shipping</strong>
               </div>
             )}
 
@@ -114,31 +111,31 @@ export function CartDrawer() {
               {items.map((item) => (
                 <div key={item.id} className="flex gap-4">
                   <Link href={`/products/${item.product_slug}`} onClick={toggleCart} className="shrink-0">
-                    <div className="w-20 h-24 bg-gray-100 relative overflow-hidden rounded-sm">
+                    <div className="w-20 h-24 bg-brand-surface relative overflow-hidden">
                       <Image src={item.image_url} alt={item.product_name} fill className="object-cover" />
                     </div>
                   </Link>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.product_name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="font-prata text-sm text-brand-ink truncate">{item.product_name}</p>
+                    <p className="font-raleway text-xs text-w-graphite mt-0.5">
                       Size: {item.size}
                       {item.color_name && ` · ${item.color_name}`}
                     </p>
-                    <p className="text-sm font-semibold mt-1">{formatPrice(item.price)}</p>
+                    <p className="font-raleway text-sm font-semibold text-brand-ink mt-1">{formatPrice(item.price)}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-gray-200 rounded">
+                      <div className="flex items-center border border-w-ghost">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-1.5 hover:bg-gray-100 transition-colors"
+                          className="p-1.5 hover:bg-brand-surface transition-colors text-brand-ink"
                           aria-label="Decrease quantity"
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="px-3 text-sm">{item.quantity}</span>
+                        <span className="px-3 font-raleway text-sm text-brand-ink">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={item.quantity >= item.stock_qty}
-                          className="p-1.5 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                          className="p-1.5 hover:bg-brand-surface transition-colors disabled:opacity-40 text-brand-ink"
                           aria-label="Increase quantity"
                         >
                           <Plus size={12} />
@@ -146,7 +143,7 @@ export function CartDrawer() {
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        className="font-raleway text-xs text-w-graphite hover:text-red-500 transition-colors"
                       >
                         Remove
                       </button>
@@ -157,23 +154,23 @@ export function CartDrawer() {
             </div>
 
             {/* Promo code */}
-            <div className="px-6 py-3 border-t border-gray-100">
+            <div className="px-6 py-3 border-t border-w-ghost/40">
               <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 border border-gray-200 px-3 py-2 rounded">
-                  <Tag size={14} className="text-gray-400 shrink-0" />
+                <div className="flex-1 flex items-center gap-2 border border-w-ghost px-3 py-2">
+                  <Tag size={14} className="text-w-graphite shrink-0" />
                   <input
                     type="text"
                     value={promoCode ?? promoInput}
                     onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
                     placeholder="Promo code"
                     disabled={!!promoCode}
-                    className="flex-1 text-sm outline-none bg-transparent"
+                    className="flex-1 font-raleway text-sm outline-none bg-transparent text-brand-ink placeholder:text-w-graphite"
                   />
                 </div>
                 {promoCode ? (
                   <button
                     onClick={() => { setPromoCode(null, 0); setPromoInput('') }}
-                    className="text-xs text-red-500 underline px-2"
+                    className="font-raleway text-xs text-red-500 underline px-2"
                   >
                     Remove
                   </button>
@@ -181,7 +178,7 @@ export function CartDrawer() {
                   <button
                     onClick={applyPromo}
                     disabled={promoLoading}
-                    className="bg-[#0A0A0A] text-white text-xs px-4 py-2 uppercase tracking-widest disabled:opacity-50"
+                    className="bg-brand-dark text-brand-background font-raleway text-xs px-4 py-2 uppercase tracking-widest disabled:opacity-50 hover:bg-brand-ink transition-colors"
                   >
                     {promoLoading ? '...' : 'Apply'}
                   </button>
@@ -190,32 +187,32 @@ export function CartDrawer() {
             </div>
 
             {/* Summary + CTA */}
-            <div className="px-6 py-5 border-t border-gray-100 space-y-3">
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between text-gray-600">
+            <div className="px-6 py-5 border-t border-w-ghost/40 space-y-3">
+              <div className="space-y-1.5 font-raleway text-sm">
+                <div className="flex justify-between text-w-graphite">
                   <span>Subtotal</span><span>{formatPrice(subtotal)}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-brand-green">
                     <span>Discount ({promoCode})</span><span>-{formatPrice(discountAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-w-graphite">
                   <span>Shipping</span>
                   <span>{shippingFree ? 'Free' : formatPrice(shipping)}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-base pt-1 border-t border-gray-100">
+                <div className="flex justify-between font-semibold text-base text-brand-ink pt-1 border-t border-w-ghost/40">
                   <span>Total</span><span>{formatPrice(total)}</span>
                 </div>
               </div>
               <Link
                 href="/checkout"
                 onClick={toggleCart}
-                className="block w-full text-center bg-[#0A0A0A] text-white py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors"
+                className="block w-full text-center bg-brand-dark text-brand-background font-raleway py-4 text-sm uppercase tracking-widest hover:bg-brand-ink transition-colors"
               >
                 Checkout
               </Link>
-              <button onClick={toggleCart} className="block w-full text-center text-xs text-gray-500 underline">
+              <button onClick={toggleCart} className="block w-full text-center font-raleway text-xs text-w-graphite underline">
                 Continue Shopping
               </button>
             </div>
